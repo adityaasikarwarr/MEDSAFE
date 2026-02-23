@@ -125,7 +125,7 @@ function StatCard({
 function AlertCard({ name, text }: { name: string; text: string }) {
   return (
     <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-      <p className="font-semibold">{name}</p>
+      <p className="font-semibold text-gray-900">{name}</p>
       <p className="text-sm text-gray-600">{text}</p>
       <p className="text-xs text-gray-400 mt-1">22:33:20</p>
     </div>
