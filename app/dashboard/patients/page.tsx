@@ -16,7 +16,15 @@ type Patient = {
 };
 
 export default function PatientsPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  /* ✅ Initialize directly from localStorage (Fixes vanishing issue) */
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("patients");
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
+  });
+
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -29,17 +37,11 @@ export default function PatientsPage() {
     status: "Stable",
   });
 
-  /* 🔥 Load patients from localStorage */
+  /* ✅ Save to localStorage whenever patients change */
   useEffect(() => {
-    const storedPatients = localStorage.getItem("patients");
-    if (storedPatients) {
-      setPatients(JSON.parse(storedPatients));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("patients", JSON.stringify(patients));
     }
-  }, []);
-
-  /* 🔥 Save patients whenever they change */
-  useEffect(() => {
-    localStorage.setItem("patients", JSON.stringify(patients));
   }, [patients]);
 
   const filteredPatients = patients.filter((p) =>
@@ -143,6 +145,7 @@ export default function PatientsPage() {
               </th>
             </tr>
           </thead>
+
           <tbody>
             {filteredPatients.length > 0 ? (
               filteredPatients.map((patient) => (
@@ -187,10 +190,10 @@ export default function PatientsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-lg bg-white/20">
-          <div className="bg-white rounded-xl p-6 w-96 space-y-4 shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg">
+          <div className="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-gray-200 space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="font-semibold text-lg text-blue-600">
+              <h2 className="font-semibold text-lg text-gray-900">
                 {editingPatient ? "Edit Patient" : "Add Patient"}
               </h2>
               <button onClick={resetForm}>
@@ -201,7 +204,7 @@ export default function PatientsPage() {
             <input
               type="text"
               placeholder="Name"
-              className="w-full border rounded-lg px-3 py-2 text-black"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -211,7 +214,7 @@ export default function PatientsPage() {
             <input
               type="number"
               placeholder="Age"
-              className="w-full border rounded-lg px-3 py-2  text-black"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.age}
               onChange={(e) =>
                 setFormData({ ...formData, age: Number(e.target.value) })
@@ -221,7 +224,7 @@ export default function PatientsPage() {
             <input
               type="text"
               placeholder="Department"
-              className="w-full border rounded-lg px-3 py-2 text-black"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.department}
               onChange={(e) =>
                 setFormData({ ...formData, department: e.target.value })
@@ -229,7 +232,7 @@ export default function PatientsPage() {
             />
 
             <select
-              className="w-full border rounded-lg px-3 py-2 text-black"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.risk}
               onChange={(e) =>
                 setFormData({ ...formData, risk: e.target.value as RiskType })
@@ -241,7 +244,7 @@ export default function PatientsPage() {
             </select>
 
             <select
-              className="w-full border rounded-lg px-3 py-2 text-black"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.status}
               onChange={(e) =>
                 setFormData({
@@ -267,7 +270,6 @@ export default function PatientsPage() {
   );
 }
 
-/* Risk Badge */
 function RiskBadge({ risk }: { risk: RiskType }) {
   const styles =
     risk === "Critical"
@@ -283,7 +285,6 @@ function RiskBadge({ risk }: { risk: RiskType }) {
   );
 }
 
-/* Status Badge */
 function StatusBadge({ status }: { status: StatusType }) {
   const styles =
     status === "Admitted"
