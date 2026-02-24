@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type RiskType = "Critical" | "Medium" | "Low";
 type StatusType = "Admitted" | "Stable";
@@ -204,7 +205,7 @@ export default function PatientsPage() {
             <input
               type="text"
               placeholder="Name"
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -224,38 +225,31 @@ export default function PatientsPage() {
             <input
               type="text"
               placeholder="Department"
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               value={formData.department}
               onChange={(e) =>
                 setFormData({ ...formData, department: e.target.value })
               }
             />
 
-            <select
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            <CustomSelect
               value={formData.risk}
-              onChange={(e) =>
-                setFormData({ ...formData, risk: e.target.value as RiskType })
+              options={["Low", "Medium", "Critical"]}
+              onChange={(val) =>
+                setFormData({ ...formData, risk: val as RiskType })
               }
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="Critical">Critical</option>
-            </select>
+            />
 
-            <select
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            <CustomSelect
               value={formData.status}
-              onChange={(e) =>
+              options={["Stable", "Admitted"]}
+              onChange={(val) =>
                 setFormData({
                   ...formData,
-                  status: e.target.value as StatusType,
+                  status: val as StatusType,
                 })
               }
-            >
-              <option value="Stable">Stable</option>
-              <option value="Admitted">Admitted</option>
-            </select>
+            />
 
             <button
               onClick={handleSubmit}
@@ -295,5 +289,60 @@ function StatusBadge({ status }: { status: StatusType }) {
     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles}`}>
       {status}
     </span>
+  );
+}
+
+function CustomSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: string[];
+  onChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex justify-between items-center px-4 py-2 rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 transition text-black"
+      >
+        <span>{value}</span>
+        <ChevronDown
+          size={18}
+          className={`transition-transform duration-300 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="absolute z-50 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden text-black"
+          >
+            {options.map((option) => (
+              <div
+                key={option}
+                onClick={() => {
+                  onChange(option);
+                  setOpen(false);
+                }}
+                className="px-4 py-2 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition"
+              >
+                {option}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
