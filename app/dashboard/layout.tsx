@@ -1,7 +1,7 @@
 "use client";
 
 import { PatientProvider } from "@/context/PatientContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -24,6 +24,22 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
+
+  /* 🔥 Dynamic Alert Count */
+  useEffect(() => {
+    const stored = localStorage.getItem("patients");
+
+    if (stored) {
+      const patients = JSON.parse(stored);
+      const criticalPatients = patients.filter(
+        (p: any) => p.risk === "Critical"
+      );
+      setAlertCount(criticalPatients.length);
+    } else {
+      setAlertCount(0);
+    }
+  }, [pathname]);
 
   return (
     <PatientProvider>
@@ -85,7 +101,7 @@ export default function DashboardLayout({
                 href="/dashboard/alerts"
                 icon={<Bell size={18} />}
                 label="Alerts"
-                badge="8"
+                badge={alertCount > 0 ? String(alertCount) : undefined}
                 active={pathname.startsWith("/dashboard/alerts")}
                 collapsed={collapsed}
               />
@@ -137,7 +153,9 @@ export default function DashboardLayout({
         </motion.aside>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex-1 min-w-0 overflow-y-auto p-8">
+          {children}
+        </main>
       </div>
     </PatientProvider>
   );
@@ -183,7 +201,9 @@ function SidebarItem({
         <div className="relative flex items-center gap-3 z-10">
           {icon}
           {!collapsed && (
-            <span className="text-sm font-medium tracking-wide">{label}</span>
+            <span className="text-sm font-medium tracking-wide">
+              {label}
+            </span>
           )}
         </div>
 
