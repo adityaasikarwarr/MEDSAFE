@@ -190,11 +190,11 @@ export default function PatientsPage() {
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-lg bg-white/20">
           <div className="bg-white rounded-xl p-6 w-96 space-y-4 shadow-lg">
             <div className="flex justify-between items-center">
-              <h2 className="font-semibold text-lg">
+              <h2 className="font-semibold text-lg text-blue-600">
                 {editingPatient ? "Edit Patient" : "Add Patient"}
               </h2>
               <button onClick={resetForm}>
-                <X size={18} />
+                <X size={18} className="text-black" />
               </button>
             </div>
 
