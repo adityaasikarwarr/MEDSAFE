@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -12,6 +13,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Menu,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -20,25 +22,44 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#F4F7FB] overflow-hidden">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-[#111827] text-white flex flex-col justify-between select-none">
-        {/* Logo Section */}
+      <motion.aside
+        animate={{ width: collapsed ? 80 : 256 }}
+        transition={{ duration: 0.3 }}
+        className="bg-[#111827] text-white flex flex-col justify-between select-none"
+      >
+        {/* Top Section */}
         <div>
-          <div className="p-6 border-b border-white/10">
-            <h1 className="text-xl font-semibold tracking-wide">MedSafe AI</h1>
-            <p className="text-sm text-gray-400">Clinical Safety</p>
+          <div className="p-4 border-b border-white/10 flex items-center justify-between">
+            {!collapsed && (
+              <div>
+                <h1 className="text-lg font-semibold tracking-wide">
+                  MedSafe AI
+                </h1>
+                <p className="text-xs text-gray-400">Clinical Safety</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="p-2 hover:bg-white/10 rounded-lg transition"
+            >
+              <Menu size={18} />
+            </button>
           </div>
 
           {/* Navigation */}
-          <nav className="p-4 space-y-2">
+          <nav className="p-3 space-y-2">
             <SidebarItem
               href="/dashboard"
               icon={<LayoutDashboard size={18} />}
               label="Dashboard"
               active={pathname === "/dashboard"}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -46,6 +67,7 @@ export default function DashboardLayout({
               icon={<Users size={18} />}
               label="Patients"
               active={pathname.startsWith("/dashboard/patients")}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -53,6 +75,7 @@ export default function DashboardLayout({
               icon={<Pill size={18} />}
               label="Medication Safety"
               active={pathname.startsWith("/dashboard/medication")}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -61,6 +84,7 @@ export default function DashboardLayout({
               label="Alerts"
               badge="8"
               active={pathname.startsWith("/dashboard/alerts")}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -68,6 +92,7 @@ export default function DashboardLayout({
               icon={<Activity size={18} />}
               label="ICU Monitor"
               active={pathname.startsWith("/dashboard/icu")}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -75,6 +100,7 @@ export default function DashboardLayout({
               icon={<BarChart3 size={18} />}
               label="Analytics"
               active={pathname.startsWith("/dashboard/analytics")}
+              collapsed={collapsed}
             />
 
             <SidebarItem
@@ -82,14 +108,19 @@ export default function DashboardLayout({
               icon={<Settings size={18} />}
               label="Settings"
               active={pathname.startsWith("/dashboard/settings")}
+              collapsed={collapsed}
             />
           </nav>
         </div>
 
-        {/* Bottom Profile Section */}
-        <div className="p-6 border-t border-white/10">
-          <p className="font-semibold text-gray-200">Dr. Smith</p>
-          <p className="text-sm text-gray-400 mb-4">Doctor</p>
+        {/* Bottom Section */}
+        <div className="p-4 border-t border-white/10">
+          {!collapsed && (
+            <>
+              <p className="font-semibold text-gray-200">Dr. Smith</p>
+              <p className="text-sm text-gray-400 mb-4">Doctor</p>
+            </>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -97,10 +128,10 @@ export default function DashboardLayout({
             className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition"
           >
             <LogOut size={16} />
-            Sign Out
+            {!collapsed && "Sign Out"}
           </motion.button>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto p-8">{children}</main>
@@ -108,19 +139,21 @@ export default function DashboardLayout({
   );
 }
 
-/* Sidebar Item Component */
+/* Sidebar Item */
 function SidebarItem({
   href,
   icon,
   label,
   active,
   badge,
+  collapsed,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
   active?: boolean;
   badge?: string;
+  collapsed?: boolean;
 }) {
   return (
     <Link href={href} className="relative block">
@@ -128,11 +161,13 @@ function SidebarItem({
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.96 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className={`relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer ${
+        className={`relative flex items-center ${
+          collapsed ? "justify-center" : "justify-between"
+        } px-4 py-3 rounded-xl cursor-pointer ${
           active ? "text-white" : "text-gray-300 hover:text-white"
         }`}
       >
-        {/* Sliding Active Background */}
+        {/* Active Background */}
         {active && (
           <motion.div
             layoutId="activeBackground"
@@ -141,13 +176,14 @@ function SidebarItem({
           />
         )}
 
-        {/* Content */}
         <div className="relative flex items-center gap-3 z-10">
           {icon}
-          <span className="text-sm font-medium tracking-wide">{label}</span>
+          {!collapsed && (
+            <span className="text-sm font-medium tracking-wide">{label}</span>
+          )}
         </div>
 
-        {badge && (
+        {!collapsed && badge && (
           <span className="relative z-10 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
             {badge}
           </span>
