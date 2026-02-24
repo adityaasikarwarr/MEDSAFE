@@ -28,9 +28,10 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-[#F4F7FB] overflow-hidden">
       {/* SIDEBAR */}
       <motion.aside
+        initial={false}
         animate={{ width: collapsed ? 80 : 256 }}
-        transition={{ duration: 0.3 }}
-        className="bg-[#111827] text-white flex flex-col justify-between select-none"
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
+        className="relative bg-[#111827] text-white flex flex-col justify-between select-none flex-shrink-0"
       >
         {/* Top Section */}
         <div>
