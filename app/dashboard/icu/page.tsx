@@ -4,49 +4,64 @@ import { useState, useEffect } from "react";
 import { usePatients } from "@/context/PatientContext";
 
 export default function ICUPage() {
-  const { patients, setPatients } = usePatients();
+  const { patients, setPatients, alerts, setAlerts } = usePatients();
   const [vitals, setVitals] = useState<Record<number, any>>({});
-
   useEffect(() => {
     const interval = setInterval(() => {
       const updatedVitals: Record<number, any> = {};
+      const newAlerts: any[] = [];
 
-      setPatients((prevPatients) =>
-        prevPatients.map((p) => {
-          const heartRate = Math.floor(Math.random() * 50) + 60;
-          const oxygen = Math.floor(Math.random() * 8) + 92;
-          const systolic = Math.floor(Math.random() * 30) + 100;
-          const diastolic = Math.floor(Math.random() * 20) + 65;
+      const updatedPatients = patients.map((p) => {
+        const heartRate = Math.floor(Math.random() * 80) + 60;
+        const oxygen = Math.floor(Math.random() * 15) + 85;
+        const systolic = Math.floor(Math.random() * 30) + 100;
+        const diastolic = Math.floor(Math.random() * 20) + 65;
 
-          updatedVitals[p.id] = {
-            heartRate,
-            oxygen,
-            systolic,
-            diastolic,
-            updatedAt: new Date().toLocaleTimeString(),
-            bed: "ICU-" + (Math.floor(Math.random() * 20) + 1),
-          };
+        updatedVitals[p.id] = {
+          heartRate,
+          oxygen,
+          systolic,
+          diastolic,
+          updatedAt: new Date().toLocaleTimeString(),
+          bed: "ICU-" + (Math.floor(Math.random() * 20) + 1),
+        };
 
-          // 🔥 Auto Risk Engine
-          let newRisk: "Critical" | "Medium" | "Low";
+        let newRisk: "Critical" | "Medium" | "Low";
 
-          if (heartRate > 115 || oxygen < 92) {
-            newRisk = "Critical";
-          } else if (heartRate > 95) {
-            newRisk = "Medium";
-          } else {
-            newRisk = "Low";
-          }
+        if (heartRate > 115 || oxygen < 92) {
+          newRisk = "Critical";
+        } else if (heartRate > 95) {
+          newRisk = "Medium";
+        } else {
+          newRisk = "Low";
+        }
 
-          return { ...p, risk: newRisk };
-        }),
-      );
+        // 🔥 Create alert only if newly critical
+        if (newRisk === "Critical" && p.risk !== "Critical") {
+          newAlerts.push({
+            id: Date.now() + Math.random(),
+            patientId: p.id,
+            message: `${p.name} entered critical condition`,
+            severity: "High",
+            timestamp: new Date().toLocaleString(),
+            resolved: false,
+          });
+        }
+
+        return { ...p, risk: newRisk };
+      });
 
       setVitals(updatedVitals);
+      setPatients(updatedPatients);
+
+      // 🔥 Add alerts separately
+      if (newAlerts.length > 0) {
+        setAlerts((prev) => [...prev, ...newAlerts]);
+      }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [setPatients]);
+  }, [patients]);
 
   return (
     <div className="space-y-8">

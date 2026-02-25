@@ -217,6 +217,17 @@ export default function PatientsPage() {
                 setFormData({ ...formData, department: e.target.value })
               }
             />
+            <input
+              type="text"
+              placeholder="Medications (comma separated)"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  medications: e.target.value.split(",").map((m) => m.trim()),
+                })
+              }
+            />
 
             <CustomSelect
               value={formData.risk}
