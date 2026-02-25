@@ -38,6 +38,8 @@ export default function DashboardLayout({
    INNER LAYOUT
 ========================= */
 function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
