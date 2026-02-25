@@ -27,67 +27,67 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* 🌈 Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 animate-gradientMove" />
 
-      {/* 🌫 Floating Glow Orbs */}
-      <div className="absolute top-[-100px] left-[-100px] w-[400px] h-[400px] bg-blue-500 opacity-20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-[-120px] right-[-120px] w-[400px] h-[400px] bg-indigo-500 opacity-20 rounded-full blur-3xl animate-pulse" />
+      {/* ✨ Floating Color Blobs */}
+      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-300 opacity-30 rounded-full blur-3xl animate-blob" />
+      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-indigo-300 opacity-30 rounded-full blur-3xl animate-blob animation-delay-2000" />
 
-      {/* 🧊 Login Card */}
+      {/* 🧊 Login Box */}
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-md p-8 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl"
+        className="relative z-10 w-full max-w-md p-[2px] rounded-3xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 animate-borderMove"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-wide">
-            MedSafe AI
-          </h1>
-          <p className="text-gray-300 mt-2 text-sm">
-            Clinical Safety Platform Login
+        {/* Inner Card */}
+        <div className="bg-white rounded-3xl p-10 shadow-2xl">
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-bold text-gray-800">MedSafe AI</h1>
+            <p className="text-gray-500 text-sm mt-2">
+              Clinical Safety Platform
+            </p>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-5">
+            <div>
+              <label className="text-sm text-gray-600">Email</label>
+              <input
+                type="email"
+                placeholder="doctor@hospital.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-black"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-600">Password</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-black"
+              />
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleLogin}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition"
+            >
+              Sign In
+            </motion.button>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Secure clinical authentication
           </p>
         </div>
-
-        <div className="space-y-5">
-          {/* Email */}
-          <div>
-            <label className="text-sm text-gray-300">Email</label>
-            <input
-              type="email"
-              placeholder="doctor@hospital.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-2 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-inner"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="text-sm text-gray-300">Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-2 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-inner"
-            />
-          </div>
-
-          {/* Button */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleLogin}
-            className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition"
-          >
-            Sign In
-          </motion.button>
-        </div>
-
-        <p className="text-center text-gray-400 text-xs mt-6">
-          Secure clinical authentication system
-        </p>
       </motion.div>
     </div>
   );
