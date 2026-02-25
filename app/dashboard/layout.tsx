@@ -103,12 +103,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Sidebar Toggle */}
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setCollapsed(!collapsed)}
-              className="p-2 rounded-xl hover:bg-white/10 transition"
+              onClick={() => {
+                logout(); // Clear auth
+                setShowNotifications(false); // Close dropdown
+                router.replace("/login"); // Redirect safely
+              }}
+              className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition"
             >
-              <Menu size={18} />
+              <LogOut size={16} />
+              {!collapsed && "Sign Out"}
             </motion.button>
           </div>
 
