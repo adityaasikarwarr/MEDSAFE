@@ -49,18 +49,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   const activeAlerts = alerts?.filter((a: any) => !a.resolved) || [];
 
-  /* =========================
-     ROUTE PROTECTION FIX
-  ========================= */
+  /* 🔐 ROUTE PROTECTION */
   useEffect(() => {
     if (!user) {
       router.replace("/login");
     }
   }, [user, router]);
 
-  /* =========================
-     CLOSE DROPDOWN ON OUTSIDE CLICK
-  ========================= */
+  /* 🧠 CLOSE DROPDOWN ON OUTSIDE CLICK */
   useEffect(() => {
     function handleClickOutside(event: any) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -72,9 +68,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* =========================
-     LOADING SCREEN (IMPORTANT)
-  ========================= */
+  /* ⛔ SHOW LOADING IF USER NULL */
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#F4F7FB]">
@@ -83,9 +77,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  /* =========================
-     MAIN LAYOUT
-  ========================= */
   return (
     <div className="flex h-screen bg-[#F4F7FB] overflow-hidden">
       {/* =========================
@@ -97,7 +88,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
         className="relative bg-[#0F172A] text-white flex flex-col justify-between flex-shrink-0"
       >
-        {/* ===== Top Section ===== */}
+        {/* ===== TOP SECTION ===== */}
         <div>
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             {!collapsed && (
@@ -119,7 +110,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          {/* ===== Navigation ===== */}
+          {/* ===== NAVIGATION ===== */}
           <nav className="p-3 space-y-2">
             <SidebarItem
               href="/dashboard"
@@ -184,7 +175,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* ===== Bottom Section ===== */}
+        {/* ===== BOTTOM SECTION ===== */}
         <div className="p-4 border-t border-white/10">
           {!collapsed && (
             <>
@@ -216,16 +207,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           MAIN CONTENT
       ========================= */}
       <main className="flex-1 overflow-y-auto p-8 relative">
-        {/* 🔔 Notification Dropdown */}
-        <div className="absolute top-6 right-8" ref={dropdownRef}>
+        {/* 🔔 PROFESSIONAL NOTIFICATION SYSTEM */}
+        <div className="fixed top-6 right-8 z-[100]" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 bg-white rounded-xl shadow hover:shadow-md transition"
+            className="relative p-3 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            <Bell size={18} />
+            <Bell size={20} className="text-gray-700" />
 
             {activeAlerts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-1.5 py-0.5 rounded-full">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full shadow-md animate-pulse">
                 {activeAlerts.length}
               </span>
             )}
@@ -234,40 +225,60 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <AnimatePresence>
             {showNotifications && (
               <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                initial={{ opacity: 0, y: -15, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50"
+                exit={{ opacity: 0, y: -15, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                className="mt-4 w-96 bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden backdrop-blur-xl"
               >
-                <div className="p-4 font-semibold border-b">
-                  Active Notifications
+                <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <h3 className="font-semibold text-gray-800">
+                    Active Notifications
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Real-time clinical alerts
+                  </p>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto">
+                <div className="max-h-72 overflow-y-auto">
                   {activeAlerts.length > 0 ? (
-                    activeAlerts.slice(0, 5).map((alert: any) => (
+                    activeAlerts.slice(0, 6).map((alert: any) => (
                       <div
                         key={alert.id}
-                        className="px-4 py-3 text-sm border-b hover:bg-gray-50 transition"
+                        className="flex items-start gap-3 px-6 py-4 border-b hover:bg-gray-50 transition"
                       >
-                        {alert.message}
+                        <span
+                          className={`w-2 h-2 mt-2 rounded-full ${
+                            alert.severity === "High"
+                              ? "bg-red-500"
+                              : "bg-yellow-500"
+                          }`}
+                        />
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {alert.message}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {alert.severity} Priority
+                          </p>
+                        </div>
                       </div>
                     ))
                   ) : (
-                    <div className="p-4 text-sm text-gray-500">
-                      No new alerts
+                    <div className="p-6 text-sm text-gray-500 text-center">
+                      No active alerts
                     </div>
                   )}
                 </div>
 
-                <div className="p-3 text-center">
+                <div className="p-4 bg-gray-50 text-center">
                   <Link
                     href="/dashboard/alerts"
                     onClick={() => setShowNotifications(false)}
-                    className="text-blue-600 text-sm hover:underline"
+                    className="text-blue-600 text-sm font-medium hover:underline"
                   >
-                    View All Alerts
+                    View All Alerts →
                   </Link>
                 </div>
               </motion.div>
@@ -282,7 +293,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 }
 
 /* =========================
-   SIDEBAR ITEM COMPONENT
+   SIDEBAR ITEM
 ========================= */
 function SidebarItem({
   href,
