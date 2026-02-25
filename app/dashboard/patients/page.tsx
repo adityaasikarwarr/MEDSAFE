@@ -1,5 +1,6 @@
 "use client";
 
+import { usePatients } from "@/context/PatientContext";
 import { useState, useEffect } from "react";
 import { Search, Plus, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,15 +18,7 @@ type Patient = {
 };
 
 export default function PatientsPage() {
-  /* ✅ Initialize directly from localStorage (Fixes vanishing issue) */
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("patients");
-      return stored ? JSON.parse(stored) : [];
-    }
-    return [];
-  });
-
+  const { patients, setPatients } = usePatients();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -37,13 +30,6 @@ export default function PatientsPage() {
     risk: "Low",
     status: "Stable",
   });
-
-  /* ✅ Save to localStorage whenever patients change */
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("patients", JSON.stringify(patients));
-    }
-  }, [patients]);
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()),

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePatients } from "@/context/PatientContext";
 import { useEffect, useState } from "react";
 
 type RiskType = "Critical" | "Medium" | "Low";
@@ -21,31 +22,25 @@ type Alert = {
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const { patients } = usePatients();
 
   useEffect(() => {
-    const storedPatients = localStorage.getItem("patients");
-    if (storedPatients) {
-      const patients: Patient[] = JSON.parse(storedPatients);
+    const generatedAlerts: Alert[] = patients
+      .filter((p) => p.risk === "Critical")
+      .map((p) => ({
+        id: p.id,
+        message: `${p.name} is in critical condition (${p.department})`,
+        severity: p.status === "Admitted" ? "High" : "Medium",
+      }));
 
-      const generatedAlerts: Alert[] = patients
-        .filter((p) => p.risk === "Critical")
-        .map((p) => ({
-          id: p.id,
-          message: `${p.name} is in critical condition (${p.department})`,
-          severity: p.status === "Admitted" ? "High" : "Medium",
-        }));
-
-      setAlerts(generatedAlerts);
-    }
-  }, []);
+    setAlerts(generatedAlerts);
+  }, [patients]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Alerts</h1>
-        <p className="text-gray-500">
-          Auto-generated safety alerts
-        </p>
+        <p className="text-gray-500">Auto-generated safety alerts</p>
       </div>
 
       <div className="space-y-4">
@@ -59,14 +54,10 @@ export default function AlertsPage() {
                   : "border-yellow-500"
               }`}
             >
-              <p className="font-semibold text-gray-900">
-                {alert.message}
-              </p>
+              <p className="font-semibold text-gray-900">{alert.message}</p>
               <p
                 className={`text-sm mt-1 ${
-                  alert.severity === "High"
-                    ? "text-red-600"
-                    : "text-yellow-600"
+                  alert.severity === "High" ? "text-red-600" : "text-yellow-600"
                 }`}
               >
                 {alert.severity} Priority

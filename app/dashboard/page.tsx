@@ -1,5 +1,6 @@
 "use client";
 
+import { usePatients } from "@/context/PatientContext";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import {
@@ -23,16 +24,7 @@ type Patient = {
 };
 
 export default function DashboardPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-
-  /* 🔥 Load patients from localStorage */
-  useEffect(() => {
-    const storedPatients = localStorage.getItem("patients");
-    if (storedPatients) {
-      setPatients(JSON.parse(storedPatients));
-    }
-  }, []);
-
+  const { patients } = usePatients();
   /* 🔥 Calculate stats dynamically */
   const total = patients.length;
   const critical = patients.filter((p) => p.risk === "Critical").length;
