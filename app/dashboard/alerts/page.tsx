@@ -1,18 +1,6 @@
 "use client";
 
 import { usePatients } from "@/context/PatientContext";
-import { useEffect, useState } from "react";
-
-type RiskType = "Critical" | "Medium" | "Low";
-
-type Patient = {
-  id: number;
-  name: string;
-  age: number;
-  department: string;
-  risk: RiskType;
-  status: string;
-};
 
 type Alert = {
   id: number;
@@ -21,20 +9,16 @@ type Alert = {
 };
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const { patients } = usePatients();
 
-  useEffect(() => {
-    const generatedAlerts: Alert[] = patients
-      .filter((p) => p.risk === "Critical")
-      .map((p) => ({
-        id: p.id,
-        message: `${p.name} is in critical condition (${p.department})`,
-        severity: p.status === "Admitted" ? "High" : "Medium",
-      }));
-
-    setAlerts(generatedAlerts);
-  }, [patients]);
+  // 🔥 Generate alerts directly from context
+  const alerts: Alert[] = patients
+    .filter((p) => p.risk === "Critical")
+    .map((p) => ({
+      id: p.id,
+      message: `${p.name} is in critical condition (${p.department})`,
+      severity: p.status === "Admitted" ? "High" : "Medium",
+    }));
 
   return (
     <div className="space-y-6">
