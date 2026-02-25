@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { PatientProvider, usePatients } from "@/context/PatientContext";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
