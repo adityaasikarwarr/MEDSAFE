@@ -1,11 +1,8 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { PatientProvider, usePatients } from "@/context/PatientContext";
 import { useState, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -19,35 +16,44 @@ import {
   Menu,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { usePatients } from "@/context/PatientContext";
+
 /* =========================
-   OUTER PROVIDER WRAPPER
+   DASHBOARD LAYOUT
 ========================= */
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <PatientProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </PatientProvider>
-  );
+  return <LayoutContent>{children}</LayoutContent>;
 }
 
 /* =========================
-   INNER LAYOUT
+   INNER CONTENT
 ========================= */
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [collapsed, setCollapsed] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const { user, logout } = useAuth();
   const { patients } = usePatients();
 
-  /* 🔥 Dynamic Alert Generation */
+  /* 🔐 PROTECTED ROUTE */
+  useEffect(() => {
+    if (!user) {
+      router.replace("/login");
+    }
+  }, [user, router]);
+
+  if (!user) return null;
+
+  /* 🔥 Dynamic Alert Generator */
   const activeAlerts = patients
     .filter((p: any) => p.risk === "Critical")
     .map((p: any) => ({
@@ -56,7 +62,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       severity: p.status === "Admitted" ? "High" : "Medium",
     }));
 
-  /* Close dropdown on outside click */
+  /* Close dropdown when clicking outside */
   useEffect(() => {
     function handleClickOutside(event: any) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -95,14 +101,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {/* Menu Toggle */}
+            {/* Sidebar Toggle */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setCollapsed(!collapsed)}
               className="p-2 rounded-xl hover:bg-white/10 transition"
             >
-              <Menu size={18} className="text-gray-300" />
+              <Menu size={18} />
             </motion.button>
           </div>
 
@@ -175,14 +181,18 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-white/10">
           {!collapsed && (
             <>
-              <p className="font-semibold text-gray-200">Dr. Smith</p>
-              <p className="text-sm text-gray-400 mb-4">Senior Physician</p>
+              <p className="font-semibold text-gray-200">{user.email}</p>
+              <p className="text-sm text-gray-400 mb-4">Authenticated User</p>
             </>
           )}
 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              logout();
+              router.push("/login");
+            }}
             className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition"
           >
             <LogOut size={16} />
@@ -195,7 +205,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
         <div className="h-16 bg-white border-b flex items-center justify-end px-6 relative">
-          {/* Notification */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -215,7 +224,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               )}
             </button>
 
-            {/* Dropdown */}
             <AnimatePresence>
               {showNotifications && (
                 <motion.div
@@ -280,7 +288,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 }
 
 /* =========================
-   SIDEBAR ITEM COMPONENT
+   SIDEBAR ITEM
 ========================= */
 function SidebarItem({
   href,
