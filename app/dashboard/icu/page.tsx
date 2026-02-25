@@ -4,38 +4,56 @@ import { useState, useEffect } from "react";
 import { usePatients } from "@/context/PatientContext";
 
 export default function ICUPage() {
-  const { patients } = usePatients();
+  const { patients, setPatients } = usePatients();
   const [vitals, setVitals] = useState<Record<number, any>>({});
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const updated: Record<number, any> = {};
+      const updatedVitals: Record<number, any> = {};
 
-      patients.forEach((p) => {
-        updated[p.id] = {
-          heartRate: Math.floor(Math.random() * 50) + 60,
-          oxygen: Math.floor(Math.random() * 8) + 92,
-          systolic: Math.floor(Math.random() * 30) + 100,
-          diastolic: Math.floor(Math.random() * 20) + 65,
-          updatedAt: new Date().toLocaleTimeString(),
-          bed: "ICU-" + (Math.floor(Math.random() * 20) + 1),
-        };
-      });
+      setPatients((prevPatients) =>
+        prevPatients.map((p) => {
+          const heartRate = Math.floor(Math.random() * 50) + 60;
+          const oxygen = Math.floor(Math.random() * 8) + 92;
+          const systolic = Math.floor(Math.random() * 30) + 100;
+          const diastolic = Math.floor(Math.random() * 20) + 65;
 
-      setVitals(updated);
+          updatedVitals[p.id] = {
+            heartRate,
+            oxygen,
+            systolic,
+            diastolic,
+            updatedAt: new Date().toLocaleTimeString(),
+            bed: "ICU-" + (Math.floor(Math.random() * 20) + 1),
+          };
+
+          // 🔥 Auto Risk Engine
+          let newRisk: "Critical" | "Medium" | "Low";
+
+          if (heartRate > 115 || oxygen < 92) {
+            newRisk = "Critical";
+          } else if (heartRate > 95) {
+            newRisk = "Medium";
+          } else {
+            newRisk = "Low";
+          }
+
+          return { ...p, risk: newRisk };
+        }),
+      );
+
+      setVitals(updatedVitals);
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [patients]);
+  }, [setPatients]);
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          ICU Monitor Wall
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">ICU Monitor Wall</h1>
         <p className="text-gray-500">
-          Advanced real-time patient monitoring
+          Intelligent real-time patient monitoring
         </p>
       </div>
 
@@ -44,16 +62,10 @@ export default function ICUPage() {
           const data = vitals[patient.id];
           if (!data) return null;
 
-          const isCritical =
-            data.heartRate > 110 || data.oxygen < 93;
-          const isWarning =
-            data.heartRate > 95 || data.oxygen < 95;
+          const isCritical = data.heartRate > 115 || data.oxygen < 92;
+          const isWarning = data.heartRate > 95 || data.oxygen < 95;
 
-          const severityLevel = isCritical
-            ? 90
-            : isWarning
-            ? 60
-            : 30;
+          const severityLevel = isCritical ? 90 : isWarning ? 60 : 30;
 
           return (
             <div
@@ -62,11 +74,11 @@ export default function ICUPage() {
                 isCritical
                   ? "bg-red-50 border-red-400"
                   : isWarning
-                  ? "bg-yellow-50 border-yellow-400"
-                  : "bg-white border-gray-200"
+                    ? "bg-yellow-50 border-yellow-400"
+                    : "bg-white border-gray-200"
               }`}
             >
-              {/* Top Header */}
+              {/* Header */}
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">
@@ -86,15 +98,11 @@ export default function ICUPage() {
                       isCritical
                         ? "bg-red-600 text-white animate-pulse"
                         : isWarning
-                        ? "bg-yellow-400 text-black"
-                        : "bg-green-500 text-white"
+                          ? "bg-yellow-400 text-black"
+                          : "bg-green-500 text-white"
                     }`}
                   >
-                    {isCritical
-                      ? "CRITICAL"
-                      : isWarning
-                      ? "WARNING"
-                      : "STABLE"}
+                    {isCritical ? "CRITICAL" : isWarning ? "WARNING" : "STABLE"}
                   </span>
 
                   <span className="text-xs text-gray-400">
@@ -108,12 +116,12 @@ export default function ICUPage() {
                 <Vital
                   label="Heart Rate"
                   value={`${data.heartRate} bpm`}
-                  alert={data.heartRate > 110}
+                  alert={data.heartRate > 115}
                 />
                 <Vital
                   label="Oxygen"
                   value={`${data.oxygen}%`}
-                  alert={data.oxygen < 93}
+                  alert={data.oxygen < 92}
                 />
                 <Vital
                   label="Blood Pressure"
@@ -129,17 +137,15 @@ export default function ICUPage() {
 
               {/* Severity Bar */}
               <div className="mt-5">
-                <p className="text-xs text-gray-500 mb-1">
-                  Risk Severity
-                </p>
+                <p className="text-xs text-gray-500 mb-1">Risk Severity</p>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full transition-all duration-500 ${
                       isCritical
                         ? "bg-red-500"
                         : isWarning
-                        ? "bg-yellow-400"
-                        : "bg-green-500"
+                          ? "bg-yellow-400"
+                          : "bg-green-500"
                     }`}
                     style={{ width: `${severityLevel}%` }}
                   />
@@ -165,9 +171,7 @@ function Vital({
   return (
     <div
       className={`rounded-xl p-4 transition-all ${
-        alert
-          ? "bg-red-100 text-red-700"
-          : "bg-gray-100 text-gray-900"
+        alert ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-900"
       }`}
     >
       <p className="text-xs opacity-70">{label}</p>
