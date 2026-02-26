@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -16,8 +17,8 @@ export default function LoginPage() {
     if (!email || !password) return;
 
     login({
-      name: "Dr. Smith",
-      role: "Senior Physician",
+      name,
+      role: "Doctor",
       email,
     });
 
@@ -52,6 +53,16 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="space-y-5">
+            <div>
+              <label className="text-sm text-gray-600">Full Name</label>
+              <input
+                type="text"
+                placeholder="Dr. John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-black"
+              />
+            </div>
             <div>
               <label className="text-sm text-gray-600">Email</label>
               <input
