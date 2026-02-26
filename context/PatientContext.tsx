@@ -63,6 +63,14 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   }, [patients]);
 
   useEffect(() => {
+    setAlerts((prevAlerts) =>
+      prevAlerts.filter((alert) =>
+        patients.some((p) => p.id === alert.patientId),
+      ),
+    );
+  }, [patients]);
+
+  useEffect(() => {
     localStorage.setItem("alerts", JSON.stringify(alerts));
   }, [alerts]);
 
@@ -80,12 +88,38 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
   const updatePatient = (updatedPatient: Patient) => {
     setPatients((prev) =>
-      prev.map((p) => (p.id === updatedPatient.id ? updatedPatient : p)),
+      prev.map((p) => {
+        if (p.id !== updatedPatient.id) return p;
+
+        // 🔥 If patient becomes Critical → create alert
+        if (p.risk !== "Critical" && updatedPatient.risk === "Critical") {
+          createAlert({
+            patientId: updatedPatient.id,
+            message: `${updatedPatient.name} entered critical condition`,
+            severity: "Critical",
+          });
+        }
+
+        // 🔥 If patient improves → auto resolve alerts
+        if (p.risk === "Critical" && updatedPatient.risk !== "Critical") {
+          setAlerts((prevAlerts) =>
+            prevAlerts.map((a) =>
+              a.patientId === updatedPatient.id && !a.resolved
+                ? { ...a, resolved: true }
+                : a,
+            ),
+          );
+        }
+
+        return updatedPatient;
+      }),
     );
   };
 
   const deletePatient = (id: number) => {
     setPatients((prev) => prev.filter((p) => p.id !== id));
+
+    setAlerts((prev) => prev.filter((alert) => alert.patientId !== id));
   };
 
   const createAlert = ({
@@ -97,16 +131,25 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     message: string;
     severity: Severity;
   }) => {
-    const newAlert: Alert = {
-      id: Date.now(),
-      patientId,
-      message,
-      severity,
-      timestamp: new Date().toISOString(),
-      resolved: false,
-    };
+    setAlerts((prev) => {
+      const alreadyExists = prev.some(
+        (a) =>
+          a.patientId === patientId && !a.resolved && a.severity === severity,
+      );
 
-    setAlerts((prev) => [...prev, newAlert]);
+      if (alreadyExists) return prev;
+
+      const newAlert: Alert = {
+        id: Date.now(),
+        patientId,
+        message,
+        severity,
+        timestamp: new Date().toISOString(),
+        resolved: false,
+      };
+
+      return [...prev, newAlert];
+    });
   };
 
   const resolveAlert = (id: number) => {
