@@ -24,10 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (email: string) => {
-    const newUser = { email };
-    setUser(newUser);
-    localStorage.setItem("authUser", JSON.stringify(newUser));
+  const login = (userData : User) => {
+    setUser(userData);
+    localStorage.setItem("authUser", JSON.stringify(userData));
   };
 
   const logout = () => {
