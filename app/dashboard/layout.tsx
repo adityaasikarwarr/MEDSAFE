@@ -26,11 +26,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <PatientProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </PatientProvider>
-  );
+  return <LayoutContent>{children}</LayoutContent>;
 }
 
 /* =========================
@@ -41,7 +37,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const { alerts } = usePatients();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -69,12 +65,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   /* ⛔ SHOW LOADING IF USER NULL */
+  if (isLoading) {
+    return null;
+  }
+
   if (!user) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-[#F4F7FB]">
-        <p className="text-gray-500 text-lg">Redirecting...</p>
-      </div>
-    );
+    router.replace("/login");
+    return null;
   }
 
   return (

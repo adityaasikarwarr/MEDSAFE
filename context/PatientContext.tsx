@@ -2,67 +2,130 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 
-type RiskType = "Critical" | "Medium" | "Low";
+export type Severity = "Low" | "Medium" | "High" | "Critical";
 
-type Patient = {
+export type Patient = {
   id: number;
   name: string;
   age: number;
   department: string;
-  risk: "Critical" | "Medium" | "Low";
+  risk: Severity;
   status: string;
   medications?: string[];
 };
 
-type Alert = {
+export type Alert = {
   id: number;
   patientId: number;
   message: string;
-  severity: "High" | "Medium";
+  severity: Severity;
   timestamp: string;
   resolved: boolean;
 };
 
 type PatientContextType = {
   patients: Patient[];
-  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
   alerts: Alert[];
-  setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
+  addPatient: (patient: Patient) => void;
+  updatePatient: (patient: Patient) => void;
+  deletePatient: (id: number) => void;
+  createAlert: (data: {
+    patientId: number;
+    message: string;
+    severity: Severity;
+  }) => void;
+  resolveAlert: (id: number) => void;
 };
 
-const PatientContext = createContext<PatientContextType | undefined>(undefined);
+const PatientContext = createContext<PatientContextType | null>(null);
 
 export function PatientProvider({ children }: { children: React.ReactNode }) {
-  // 🔥 Load from localStorage on first render
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("patients");
-      return stored ? JSON.parse(stored) : [];
-    }
-    return [];
-  });
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
-  const [alerts, setAlerts] = useState<Alert[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("alerts");
-      return stored ? JSON.parse(stored) : [];
-    }
-    return [];
-  });
+  // Load from localStorage
+  useEffect(() => {
+    const storedPatients = localStorage.getItem("patients");
+    const storedAlerts = localStorage.getItem("alerts");
 
-  // 🔥 Save patients whenever they change
+    if (storedPatients) {
+      setPatients(JSON.parse(storedPatients));
+    }
+
+    if (storedAlerts) {
+      setAlerts(JSON.parse(storedAlerts));
+    }
+  }, []);
+
+  // Persist
   useEffect(() => {
     localStorage.setItem("patients", JSON.stringify(patients));
   }, [patients]);
 
-  // 🔥 Save alerts whenever they change
   useEffect(() => {
     localStorage.setItem("alerts", JSON.stringify(alerts));
   }, [alerts]);
 
+  const addPatient = (patient: Patient) => {
+    setPatients((prev) => [...prev, patient]);
+
+    if (patient.risk === "Critical") {
+      createAlert({
+        patientId: patient.id,
+        message: `${patient.name} is in critical condition`,
+        severity: "Critical",
+      });
+    }
+  };
+
+  const updatePatient = (updatedPatient: Patient) => {
+    setPatients((prev) =>
+      prev.map((p) => (p.id === updatedPatient.id ? updatedPatient : p)),
+    );
+  };
+
+  const deletePatient = (id: number) => {
+    setPatients((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const createAlert = ({
+    patientId,
+    message,
+    severity,
+  }: {
+    patientId: number;
+    message: string;
+    severity: Severity;
+  }) => {
+    const newAlert: Alert = {
+      id: Date.now(),
+      patientId,
+      message,
+      severity,
+      timestamp: new Date().toISOString(),
+      resolved: false,
+    };
+
+    setAlerts((prev) => [...prev, newAlert]);
+  };
+
+  const resolveAlert = (id: number) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, resolved: true } : a)),
+    );
+  };
+
   return (
     <PatientContext.Provider
-      value={{ patients, setPatients, alerts, setAlerts }}
+      value={{
+        patients,
+        alerts,
+        addPatient,
+        updatePatient,
+        deletePatient,
+        createAlert,
+        resolveAlert,
+      }}
     >
       {children}
     </PatientContext.Provider>

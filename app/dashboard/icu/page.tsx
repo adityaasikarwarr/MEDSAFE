@@ -1,67 +1,58 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { usePatients } from "@/context/PatientContext";
+import type { Severity } from "@/context/PatientContext";
+import { useState, useEffect } from "react";
 
 export default function ICUPage() {
-  const { patients, setPatients, alerts, setAlerts } = usePatients();
+  const { patients, updatePatient } = usePatients();
+
   const [vitals, setVitals] = useState<Record<number, any>>({});
+
   useEffect(() => {
     const interval = setInterval(() => {
-      const updatedVitals: Record<number, any> = {};
-      const newAlerts: any[] = [];
+      setVitals((prevVitals) => {
+        const updatedVitals: Record<number, any> = {};
 
-      const updatedPatients = patients.map((p) => {
-        const heartRate = Math.floor(Math.random() * 80) + 60;
-        const oxygen = Math.floor(Math.random() * 15) + 85;
-        const systolic = Math.floor(Math.random() * 30) + 100;
-        const diastolic = Math.floor(Math.random() * 20) + 65;
+        patients.forEach((p) => {
+          const heartRate = Math.floor(Math.random() * 80) + 60;
+          const oxygen = Math.floor(Math.random() * 15) + 85;
+          const systolic = Math.floor(Math.random() * 30) + 100;
+          const diastolic = Math.floor(Math.random() * 20) + 65;
 
-        updatedVitals[p.id] = {
-          heartRate,
-          oxygen,
-          systolic,
-          diastolic,
-          updatedAt: new Date().toLocaleTimeString(),
-          bed: "ICU-" + (Math.floor(Math.random() * 20) + 1),
-        };
+          let newRisk: Severity;
 
-        let newRisk: "Critical" | "Medium" | "Low";
+          if (heartRate > 115 || oxygen < 92) {
+            newRisk = "Critical";
+          } else if (heartRate > 95) {
+            newRisk = "Medium";
+          } else {
+            newRisk = "Low";
+          }
 
-        if (heartRate > 115 || oxygen < 92) {
-          newRisk = "Critical";
-        } else if (heartRate > 95) {
-          newRisk = "Medium";
-        } else {
-          newRisk = "Low";
-        }
-
-        // 🔥 Create alert only if newly critical
-        if (newRisk === "Critical" && p.risk !== "Critical") {
-          newAlerts.push({
-            id: Date.now() + Math.random(),
-            patientId: p.id,
-            message: `${p.name} entered critical condition`,
-            severity: "High",
-            timestamp: new Date().toLocaleString(),
-            resolved: false,
+          updatePatient({
+            ...p,
+            risk: newRisk,
           });
-        }
 
-        return { ...p, risk: newRisk };
+          updatedVitals[p.id] = {
+            heartRate,
+            oxygen,
+            systolic,
+            diastolic,
+            updatedAt: new Date().toLocaleTimeString(),
+            bed: "ICU-" + (Math.floor(Math.random() * 20) + 1),
+          };
+        });
+
+        return updatedVitals;
       });
-
-      setVitals(updatedVitals);
-      setPatients(updatedPatients);
-
-      // 🔥 Add alerts separately
-      if (newAlerts.length > 0) {
-        setAlerts((prev) => [...prev, ...newAlerts]);
-      }
     }, 2000);
 
-    return () => clearInterval(interval);
-  }, [patients]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [patients, updatePatient]);
 
   return (
     <div className="space-y-8">
@@ -93,7 +84,6 @@ export default function ICUPage() {
                     : "bg-white border-gray-200"
               }`}
             >
-              {/* Header */}
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">
@@ -126,7 +116,6 @@ export default function ICUPage() {
                 </div>
               </div>
 
-              {/* Vitals */}
               <div className="grid grid-cols-2 gap-4">
                 <Vital
                   label="Heart Rate"
@@ -150,7 +139,6 @@ export default function ICUPage() {
                 />
               </div>
 
-              {/* Severity Bar */}
               <div className="mt-5">
                 <p className="text-xs text-gray-500 mb-1">Risk Severity</p>
                 <div className="w-full bg-gray-200 rounded-full h-2">

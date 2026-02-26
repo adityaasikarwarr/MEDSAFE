@@ -1,27 +1,19 @@
 "use client";
 
 import { usePatients } from "@/context/PatientContext";
-import { useState, useEffect } from "react";
+import type { Severity, Patient } from "@/context/PatientContext";
+import { useState } from "react";
 import { Search, Plus, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type RiskType = "Critical" | "Medium" | "Low";
 type StatusType = "Admitted" | "Stable";
 
-type Patient = {
-  id: number;
-  name: string;
-  age: number;
-  department: string;
-  risk: RiskType;
-  status: StatusType;
-};
-
 export default function PatientsPage() {
-  const { patients, setPatients } = usePatients();
+  const { patients, addPatient, updatePatient, deletePatient } = usePatients();
+
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<Omit<Patient, "id">>({
     name: "",
@@ -29,6 +21,7 @@ export default function PatientsPage() {
     department: "",
     risk: "Low",
     status: "Stable",
+    medications: [],
   });
 
   const filteredPatients = patients.filter((p) =>
@@ -38,18 +31,16 @@ export default function PatientsPage() {
   const handleSubmit = () => {
     if (!formData.name || !formData.department) return;
 
-    if (editingPatient) {
-      setPatients(
-        patients.map((p) =>
-          p.id === editingPatient.id ? { ...p, ...formData } : p,
-        ),
-      );
+    if (editingPatientId !== null) {
+      updatePatient({
+        id: editingPatientId,
+        ...formData,
+      });
     } else {
-      const newPatient: Patient = {
+      addPatient({
         id: Date.now(),
         ...formData,
-      };
-      setPatients([...patients, newPatient]);
+      });
     }
 
     resetForm();
@@ -62,23 +53,21 @@ export default function PatientsPage() {
       department: "",
       risk: "Low",
       status: "Stable",
+      medications: [],
     });
-    setEditingPatient(null);
+    setEditingPatientId(null);
     setShowModal(false);
   };
 
-  const deletePatient = (id: number) => {
-    setPatients(patients.filter((p) => p.id !== id));
-  };
-
   const editPatient = (patient: Patient) => {
-    setEditingPatient(patient);
+    setEditingPatientId(patient.id);
     setFormData({
       name: patient.name,
       age: patient.age,
       department: patient.department,
       risk: patient.risk,
       status: patient.status,
+      medications: patient.medications || [],
     });
     setShowModal(true);
   };
@@ -181,7 +170,7 @@ export default function PatientsPage() {
           <div className="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-gray-200 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="font-semibold text-lg text-gray-900">
-                {editingPatient ? "Edit Patient" : "Add Patient"}
+                {editingPatientId !== null ? "Edit Patient" : "Add Patient"}
               </h2>
               <button onClick={resetForm}>
                 <X size={18} className="text-black" />
@@ -191,7 +180,7 @@ export default function PatientsPage() {
             <input
               type="text"
               placeholder="Name"
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:ring-2 focus:ring-blue-500 transition"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -201,39 +190,53 @@ export default function PatientsPage() {
             <input
               type="number"
               placeholder="Age"
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:ring-2 focus:ring-blue-500 transition"
               value={formData.age}
               onChange={(e) =>
-                setFormData({ ...formData, age: Number(e.target.value) })
+                setFormData({
+                  ...formData,
+                  age: Number(e.target.value),
+                })
               }
             />
 
             <input
               type="text"
               placeholder="Department"
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:ring-2 focus:ring-blue-500 transition"
               value={formData.department}
-              onChange={(e) =>
-                setFormData({ ...formData, department: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="Medications (comma separated)"
-              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  medications: e.target.value.split(",").map((m) => m.trim()),
+                  department: e.target.value,
+                })
+              }
+            />
+
+            <input
+              type="text"
+              placeholder="Medications (comma separated)"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:ring-2 focus:ring-blue-500 transition"
+              value={formData.medications.join(", ")}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  medications: e.target.value
+                    .split(",")
+                    .map((m) => m.trim())
+                    .filter(Boolean),
                 })
               }
             />
 
             <CustomSelect
               value={formData.risk}
-              options={["Low", "Medium", "Critical"]}
+              options={["Low", "Medium", "High", "Critical"]}
               onChange={(val) =>
-                setFormData({ ...formData, risk: val as RiskType })
+                setFormData({
+                  ...formData,
+                  risk: val as Severity,
+                })
               }
             />
 
@@ -252,7 +255,7 @@ export default function PatientsPage() {
               onClick={handleSubmit}
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
             >
-              {editingPatient ? "Update" : "Add"}
+              {editingPatientId !== null ? "Update" : "Add"}
             </button>
           </div>
         </div>
@@ -261,13 +264,15 @@ export default function PatientsPage() {
   );
 }
 
-function RiskBadge({ risk }: { risk: RiskType }) {
+function RiskBadge({ risk }: { risk: Severity }) {
   const styles =
     risk === "Critical"
       ? "bg-red-100 text-red-600"
-      : risk === "Medium"
-        ? "bg-yellow-100 text-yellow-600"
-        : "bg-green-100 text-green-600";
+      : risk === "High"
+        ? "bg-orange-100 text-orange-600"
+        : risk === "Medium"
+          ? "bg-yellow-100 text-yellow-600"
+          : "bg-green-100 text-green-600";
 
   return (
     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles}`}>
