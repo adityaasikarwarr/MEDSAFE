@@ -1,5 +1,6 @@
 "use client";
 
+import { getPermissions } from "@/engine/permissionEngine";
 import { useAuth } from "@/context/AuthContext";
 import { usePatients } from "@/context/PatientContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,6 +35,8 @@ export default function DashboardLayout({
   const [showNotifications, setShowNotifications] = useState(false);
 
   const activeAlerts = alerts?.filter((a) => !a.resolved) || [];
+
+  const userPermissions = user ? getPermissions(user.role) : null;
 
   /* 🔐 Route Protection */
   useEffect(() => {
@@ -83,7 +86,6 @@ export default function DashboardLayout({
           </div>
 
           <nav className="p-3 space-y-2">
-            {/* Home */}
             <SidebarItem
               href="/"
               icon={<Home size={18} />}
@@ -92,7 +94,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* Dashboard */}
             <SidebarItem
               href="/dashboard"
               icon={<LayoutDashboard size={18} />}
@@ -101,7 +102,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* Patients */}
             <SidebarItem
               href="/dashboard/patients"
               icon={<Users size={18} />}
@@ -110,7 +110,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* Medication */}
             <SidebarItem
               href="/dashboard/medication"
               icon={<Pill size={18} />}
@@ -119,7 +118,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* Alerts */}
             <SidebarItem
               href="/dashboard/alerts"
               icon={<Bell size={18} />}
@@ -133,7 +131,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* ICU */}
             <SidebarItem
               href="/dashboard/icu"
               icon={<Activity size={18} />}
@@ -142,7 +139,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* Analytics */}
             <SidebarItem
               href="/dashboard/analytics"
               icon={<BarChart3 size={18} />}
@@ -151,14 +147,16 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* Settings */}
-            <SidebarItem
-              href="/dashboard/settings"
-              icon={<Settings size={18} />}
-              label="Settings"
-              active={pathname.startsWith("/dashboard/settings")}
-              collapsed={collapsed}
-            />
+            {/* 🔐 Role Based Visibility */}
+            {userPermissions?.canAccessSettings && (
+              <SidebarItem
+                href="/dashboard/settings"
+                icon={<Settings size={18} />}
+                label="Settings"
+                active={pathname.startsWith("/dashboard/settings")}
+                collapsed={collapsed}
+              />
+            )}
           </nav>
         </div>
 

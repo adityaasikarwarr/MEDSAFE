@@ -1,9 +1,21 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+import { getPermissions } from "@/engine/permissionEngine";
 import { useActivity } from "@/context/ActivityContext";
 
 export default function ActivityPage() {
   const { logs } = useActivity();
+  const { user } = useAuth();
+  const permissions = user ? getPermissions(user.role) : null;
+
+  if (!permissions?.canViewActivity) {
+    return (
+      <div className="mt-20 font-semibold text-center text-red-500">
+        Access Denied
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
