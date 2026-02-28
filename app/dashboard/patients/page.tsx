@@ -28,6 +28,7 @@ export default function PatientsPage() {
     risk: "Low",
     status: "Stable",
     medications: [],
+    bedNumber: "",
   });
 
   const filteredPatients = patients.filter((p) =>
@@ -219,6 +220,16 @@ export default function PatientsPage() {
               value={formData.department}
               onChange={(e) =>
                 setFormData({ ...formData, department: e.target.value })
+              }
+            />
+
+            <input
+              type="text"
+              placeholder="ICU Bed (e.g. A1)"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
+              value={formData.bedNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, bedNumber: e.target.value })
               }
             />
 

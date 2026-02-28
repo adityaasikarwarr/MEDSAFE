@@ -8,6 +8,6 @@ export interface Patient {
   risk: Severity;
   status: string;
   medications?: string[];
-  bedNumber?: number;
+  bedNumber?: string;
   admittedAt?: string;
 }
