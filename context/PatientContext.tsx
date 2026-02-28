@@ -1,5 +1,8 @@
 "use client";
 
+import { activityService } from "@/services/activityService";
+import { createActivityLog } from "@/engine/activityEngine";
+import { useAuth } from "@/context/AuthContext";
 import { evaluatePatientRisk } from "@/engine/alertEngine";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Patient, Severity } from "@/types/patient";
@@ -19,6 +22,7 @@ export type PatientContextType = {
 const PatientContext = createContext<PatientContextType | null>(null);
 
 export function PatientProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
@@ -55,6 +59,16 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
     setPatients(updatedPatients);
     setAlerts(updatedAlerts);
+
+    if (user) {
+      const log = createActivityLog(
+        "PATIENT_CREATED",
+        `Patient ${patient.name} created`,
+        user.name,
+      );
+
+      await activityService.create(log);
+    }
   };
 
   /* ===============================
@@ -76,6 +90,16 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
     setPatients(updatedPatients);
     setAlerts(updatedAlerts);
+
+    if (user) {
+      const log = createActivityLog(
+        "PATIENT_UPDATED",
+        `Patient ${updatedPatient.name} updated`,
+        user.name,
+      );
+
+      await activityService.create(log);
+    }
   };
 
   /* ===============================
@@ -90,6 +114,16 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
     setPatients(updatedPatients);
     setAlerts(updatedAlerts);
+
+    if (user) {
+      const log = createActivityLog(
+        "PATIENT_DELETED",
+        `Patient with ID ${id} deleted`,
+        user.name,
+      );
+
+      await activityService.create(log);
+    }
   };
 
   /* ===============================
@@ -104,6 +138,16 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem("alerts", JSON.stringify(updatedAlerts));
     setAlerts(updatedAlerts);
+
+    if(user) {
+      const log = createActivityLog(
+        "ALERT_RESOLVED",
+        `Alert with ID ${id} resolved`,
+        user.name,
+      );
+
+      await activityService.create(log);
+    }
   };
 
   return (

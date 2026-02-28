@@ -3,6 +3,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 import { PatientProvider } from "@/context/PatientContext";
+import { ActivityProvider } from "@/context/ActivityContext";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,10 +21,10 @@ export default function RootLayout({
         <AuthProvider>
           <SettingsProvider>
             <PatientProvider>
-              {children}
+              <ActivityProvider>{children}</ActivityProvider>
             </PatientProvider>
           </SettingsProvider>
-         </AuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );
