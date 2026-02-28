@@ -1,5 +1,6 @@
 "use client";
 
+import { evaluatePatientRisk } from "@/engine/alertEngine";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Patient, Severity } from "@/types/patient";
 import { Alert } from "@/types/alert";
@@ -42,7 +43,18 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     await patientService.create(patient);
 
     const updatedPatients = await patientService.getAll();
+    const existingAlerts = await alertService.getAll();
+
+    const newAlert = evaluatePatientRisk(patient, existingAlerts);
+
+    if (newAlert) {
+      await alertService.create(newAlert);
+    }
+
+    const updatedAlerts = await alertService.getAll();
+
     setPatients(updatedPatients);
+    setAlerts(updatedAlerts);
   };
 
   /* ===============================
@@ -52,7 +64,18 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     await patientService.update(updatedPatient);
 
     const updatedPatients = await patientService.getAll();
+    const existingAlerts = await alertService.getAll();
+
+    const newAlert = evaluatePatientRisk(updatedPatient, existingAlerts);
+
+    if (newAlert) {
+      await alertService.create(newAlert);
+    }
+
+    const updatedAlerts = await alertService.getAll();
+
     setPatients(updatedPatients);
+    setAlerts(updatedAlerts);
   };
 
   /* ===============================
