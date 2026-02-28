@@ -1,175 +1,86 @@
 "use client";
 
+import { createContext, useContext, useEffect, useState } from "react";
 import { Patient, Severity } from "@/types/patient";
 import { Alert } from "@/types/alert";
-import { createContext, useContext, useEffect, useState } from "react";
-import { useSettings } from "@/context/SettingsContext";
+import { patientService } from "@/services/patientService";
+import { alertService } from "@/services/alertService";
 
-/* =========================
-   TYPES
-========================= */
-
-type PatientContextType = {
+export type PatientContextType = {
   patients: Patient[];
   alerts: Alert[];
-  addPatient: (patient: Patient) => void;
-  updatePatient: (patient: Patient) => void;
-  deletePatient: (id: number) => void;
-  resolveAlert: (id: number) => void;
+  addPatient: (patient: Patient) => Promise<void>;
+  updatePatient: (patient: Patient) => Promise<void>;
+  deletePatient: (id: number) => Promise<void>;
+  resolveAlert: (id: number) => Promise<void>;
 };
-
-/* =========================
-   CONTEXT
-========================= */
 
 const PatientContext = createContext<PatientContextType | null>(null);
 
-/* =========================
-   PROVIDER
-========================= */
-
 export function PatientProvider({ children }: { children: React.ReactNode }) {
-  const { settings } = useSettings();
-
   const [patients, setPatients] = useState<Patient[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
-  /* =========================
-     LOAD FROM STORAGE
-  ========================= */
+  /* ===============================
+     LOAD INITIAL DATA
+  =============================== */
   useEffect(() => {
-    const storedPatients = localStorage.getItem("medsafe-patients");
-    const storedAlerts = localStorage.getItem("medsafe-alerts");
+    const loadData = async () => {
+      const storedPatients = await patientService.getAll();
+      const storedAlerts = await alertService.getAll();
+      setPatients(storedPatients);
+      setAlerts(storedAlerts);
+    };
 
-    if (storedPatients) {
-      setPatients(JSON.parse(storedPatients));
-    }
-
-    if (storedAlerts) {
-      setAlerts(JSON.parse(storedAlerts));
-    }
+    loadData();
   }, []);
 
-  /* =========================
-     SAVE TO STORAGE
-  ========================= */
-  useEffect(() => {
-    localStorage.setItem("medsafe-patients", JSON.stringify(patients));
-  }, [patients]);
-
-  useEffect(() => {
-    localStorage.setItem("medsafe-alerts", JSON.stringify(alerts));
-  }, [alerts]);
-
-  /* =========================
-     CLEAN ORPHAN ALERTS
-  ========================= */
-  useEffect(() => {
-    setAlerts((prev) =>
-      prev.filter((alert) => patients.some((p) => p.id === alert.patientId)),
-    );
-  }, [patients]);
-
-  /* =========================
-     CREATE ALERT
-  ========================= */
-  const createAlert = ({
-    patientId,
-    message,
-    severity,
-  }: {
-    patientId: number;
-    message: string;
-    severity: Severity;
-  }) => {
-    if (!settings.notificationsEnabled) return;
-
-    setAlerts((prev) => {
-      const alreadyExists = prev.some(
-        (a) =>
-          a.patientId === patientId && !a.resolved && a.severity === severity,
-      );
-
-      if (alreadyExists) return prev;
-
-      const newAlert: Alert = {
-        id: Date.now(),
-        patientId,
-        message,
-        severity,
-        timestamp: new Date().toISOString(),
-        resolved: false,
-      };
-
-      return [...prev, newAlert];
-    });
-  };
-
-  /* =========================
+  /* ===============================
      ADD PATIENT
-  ========================= */
-  const addPatient = (patient: Patient) => {
-    setPatients((prev) => [...prev, patient]);
+  =============================== */
+  const addPatient = async (patient: Patient) => {
+    await patientService.create(patient);
 
-    if (patient.risk === "Critical") {
-      createAlert({
-        patientId: patient.id,
-        message: `${patient.name} entered critical condition`,
-        severity: "Critical",
-      });
-    }
+    const updatedPatients = await patientService.getAll();
+    setPatients(updatedPatients);
   };
 
-  /* =========================
+  /* ===============================
      UPDATE PATIENT
-  ========================= */
-  const updatePatient = (updatedPatient: Patient) => {
-    setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id !== updatedPatient.id) return p;
+  =============================== */
+  const updatePatient = async (updatedPatient: Patient) => {
+    await patientService.update(updatedPatient);
 
-        /* New critical event */
-        if (p.risk !== "Critical" && updatedPatient.risk === "Critical") {
-          createAlert({
-            patientId: updatedPatient.id,
-            message: `${updatedPatient.name} entered critical condition`,
-            severity: "Critical",
-          });
-        }
-
-        /* Auto resolve if enabled */
-        if (
-          settings.autoResolveAlerts &&
-          p.risk === "Critical" &&
-          updatedPatient.risk !== "Critical"
-        ) {
-          setAlerts((prevAlerts) =>
-            prevAlerts.map((a) =>
-              a.patientId === updatedPatient.id ? { ...a, resolved: true } : a,
-            ),
-          );
-        }
-
-        return updatedPatient;
-      }),
-    );
+    const updatedPatients = await patientService.getAll();
+    setPatients(updatedPatients);
   };
 
-  /* =========================
+  /* ===============================
      DELETE PATIENT
-  ========================= */
-  const deletePatient = (id: number) => {
-    setPatients((prev) => prev.filter((p) => p.id !== id));
-    setAlerts((prev) => prev.filter((alert) => alert.patientId !== id));
+  =============================== */
+  const deletePatient = async (id: number) => {
+    await patientService.delete(id);
+    await alertService.deleteByPatient(id);
+
+    const updatedPatients = await patientService.getAll();
+    const updatedAlerts = await alertService.getAll();
+
+    setPatients(updatedPatients);
+    setAlerts(updatedAlerts);
   };
 
-  /* =========================
+  /* ===============================
      RESOLVE ALERT
-  ========================= */
-  const resolveAlert = (id: number) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, resolved: true } : a)),
+  =============================== */
+  const resolveAlert = async (id: number) => {
+    const existingAlerts = await alertService.getAll();
+
+    const updatedAlerts = existingAlerts.map((alert) =>
+      alert.id === id ? { ...alert, resolved: true } : alert,
     );
+
+    localStorage.setItem("alerts", JSON.stringify(updatedAlerts));
+    setAlerts(updatedAlerts);
   };
 
   return (
@@ -188,10 +99,9 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* =========================
+/* ===============================
    HOOK
-========================= */
-
+================================ */
 export function usePatients() {
   const context = useContext(PatientContext);
   if (!context) {
