@@ -1,12 +1,10 @@
 "use client";
 
-import { PatientProvider, usePatients } from "@/context/PatientContext";
-import { SettingsProvider } from "@/context/SettingsContext";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
-
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { usePatients } from "@/context/PatientContext";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -18,96 +16,83 @@ import {
   Settings,
   LogOut,
   Menu,
+  Home,
 } from "lucide-react";
 
-/* =========================
-   OUTER WRAPPER (PROVIDERS)
-========================= */
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthProvider>
-      <SettingsProvider>
-        <PatientProvider>
-          <LayoutContent>{children}</LayoutContent>
-        </PatientProvider>
-      </SettingsProvider>
-    </AuthProvider>
-  );
-}
-
-/* =========================
-   INNER LAYOUT CONTENT
-========================= */
-function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
+  const { alerts } = usePatients();
   const pathname = usePathname();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const { user, logout, isLoading } = useAuth();
-  const { alerts } = usePatients();
 
   const [collapsed, setCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const activeAlerts = alerts?.filter((a) => !a.resolved) || [];
 
-  /* 🔐 ROUTE PROTECTION */
+  /* 🔐 Route Protection */
   useEffect(() => {
-    if (!user && !isLoading) {
-      router.replace("/login");
+    if (!user) {
+      router.replace("/");
     }
-  }, [user, isLoading, router]);
+  }, [user, router]);
 
-  /* 🧠 CLOSE DROPDOWN ON OUTSIDE CLICK */
+  /* Close Notification Dropdown */
   useEffect(() => {
     function handleClickOutside(event: any) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowNotifications(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (isLoading) return null;
   if (!user) return null;
 
   return (
     <div className="flex h-screen bg-[#F4F7FB] overflow-hidden">
-      {/* =========================
-          SIDEBAR
-      ========================= */}
+      {/* ================= SIDEBAR ================= */}
       <motion.aside
-        animate={{ width: collapsed ? 80 : 256 }}
+        initial={false}
+        animate={{ width: collapsed ? 80 : 260 }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
         className="bg-[#0F172A] text-white flex flex-col justify-between"
       >
-        {/* TOP */}
+        {/* Top Section */}
         <div>
-          <div className="p-4 border-b border-white/10 flex justify-between items-center">
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
             {!collapsed && (
-              <div>
+              <Link href="/" className="block">
                 <h1 className="text-lg font-semibold">MedSafe AI</h1>
-                <p className="text-xs text-gray-400">
-                  Clinical Safety Platform
-                </p>
-              </div>
+                <p className="text-xs text-gray-400">Clinical Platform</p>
+              </Link>
             )}
 
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-2 hover:bg-white/10 rounded-lg"
+              className="p-2 rounded-lg hover:bg-white/10"
             >
               <Menu size={18} />
             </button>
           </div>
 
           <nav className="p-3 space-y-2">
+            {/* Home */}
+            <SidebarItem
+              href="/"
+              icon={<Home size={18} />}
+              label="Home"
+              active={pathname === "/"}
+              collapsed={collapsed}
+            />
+
+            {/* Dashboard */}
             <SidebarItem
               href="/dashboard"
               icon={<LayoutDashboard size={18} />}
@@ -116,6 +101,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               collapsed={collapsed}
             />
 
+            {/* Patients */}
             <SidebarItem
               href="/dashboard/patients"
               icon={<Users size={18} />}
@@ -124,6 +110,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               collapsed={collapsed}
             />
 
+            {/* Medication */}
             <SidebarItem
               href="/dashboard/medication"
               icon={<Pill size={18} />}
@@ -132,6 +119,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               collapsed={collapsed}
             />
 
+            {/* Alerts */}
             <SidebarItem
               href="/dashboard/alerts"
               icon={<Bell size={18} />}
@@ -145,6 +133,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               collapsed={collapsed}
             />
 
+            {/* ICU */}
             <SidebarItem
               href="/dashboard/icu"
               icon={<Activity size={18} />}
@@ -153,6 +142,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               collapsed={collapsed}
             />
 
+            {/* Analytics */}
             <SidebarItem
               href="/dashboard/analytics"
               icon={<BarChart3 size={18} />}
@@ -161,6 +151,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               collapsed={collapsed}
             />
 
+            {/* Settings */}
             <SidebarItem
               href="/dashboard/settings"
               icon={<Settings size={18} />}
@@ -171,42 +162,42 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* BOTTOM */}
+        {/* Bottom Section */}
         <div className="p-4 border-t border-white/10">
           {!collapsed && (
             <>
-              <p className="font-semibold">{user.name}</p>
-              <p className="text-sm text-gray-400 mb-4">{user.role}</p>
+              <p className="font-semibold text-gray-200">{user.name}</p>
+              <p className="mb-4 text-sm text-gray-400">{user.role}</p>
             </>
           )}
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => {
               logout();
-              router.replace("/login");
+              router.replace("/");
             }}
             className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
           >
             <LogOut size={16} />
-            {!collapsed && "Sign Out"}
-          </button>
+            {!collapsed && "Logout"}
+          </motion.button>
         </div>
       </motion.aside>
 
-      {/* =========================
-          MAIN CONTENT
-      ========================= */}
-      <main className="flex-1 overflow-y-auto p-8 relative">
-        {/* NOTIFICATION BELL */}
-        <div className="fixed top-6 right-8 z-50" ref={dropdownRef}>
+      {/* ================= MAIN CONTENT ================= */}
+      <main className="relative flex-1 p-8 overflow-y-auto">
+        {/* Notifications */}
+        <div className="fixed z-50 top-6 right-8" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-3 bg-white rounded-2xl shadow-lg"
+            className="relative p-3 bg-white shadow rounded-2xl hover:shadow-md"
           >
             <Bell size={20} className="text-gray-700" />
 
             {activeAlerts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full animate-pulse">
                 {activeAlerts.length}
               </span>
             )}
@@ -217,41 +208,33 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mt-4 w-96 bg-white rounded-3xl shadow-xl border overflow-hidden"
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-4 overflow-hidden bg-white border shadow-xl w-96 rounded-2xl"
               >
-                <div className="px-6 py-4 border-b bg-gray-50">
-                  <h3 className="font-semibold">Active Notifications</h3>
+                <div className="p-4 border-b bg-gray-50">
+                  <h3 className="font-semibold text-gray-800">Active Alerts</h3>
                 </div>
 
-                <div className="max-h-72 overflow-y-auto">
+                <div className="overflow-y-auto max-h-72">
                   {activeAlerts.length > 0 ? (
                     activeAlerts.map((alert) => (
                       <div
                         key={alert.id}
-                        className="px-6 py-4 border-b hover:bg-gray-50"
+                        className="px-4 py-3 border-b hover:bg-gray-50"
                       >
-                        <p className="text-sm font-medium">{alert.message}</p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {alert.message}
+                        </p>
                         <p className="text-xs text-gray-500">
-                          {alert.severity} Priority
+                          {alert.severity}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <div className="p-6 text-sm text-gray-500 text-center">
+                    <div className="p-6 text-sm text-center text-gray-500">
                       No active alerts
                     </div>
                   )}
-                </div>
-
-                <div className="p-4 bg-gray-50 text-center">
-                  <Link
-                    href="/dashboard/alerts"
-                    onClick={() => setShowNotifications(false)}
-                    className="text-blue-600 text-sm font-medium hover:underline"
-                  >
-                    View All Alerts →
-                  </Link>
                 </div>
               </motion.div>
             )}
@@ -264,9 +247,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* =========================
-   SIDEBAR ITEM
-========================= */
+/* ================= SIDEBAR ITEM ================= */
 function SidebarItem({
   href,
   icon,
@@ -284,7 +265,8 @@ function SidebarItem({
 }) {
   return (
     <Link href={href} className="block">
-      <div
+      <motion.div
+        whileHover={{ scale: 1.03 }}
         className={`flex items-center ${
           collapsed ? "justify-center" : "justify-between"
         } px-4 py-3 rounded-xl cursor-pointer ${
@@ -293,15 +275,15 @@ function SidebarItem({
       >
         <div className="flex items-center gap-3">
           {icon}
-          {!collapsed && <span>{label}</span>}
+          {!collapsed && <span className="text-sm font-medium">{label}</span>}
         </div>
 
         {!collapsed && badge && (
-          <span className="bg-red-500 text-xs px-2 py-1 rounded-full">
+          <span className="px-2 py-1 text-xs text-white bg-red-500 rounded-full">
             {badge}
           </span>
         )}
-      </div>
+      </motion.div>
     </Link>
   );
 }
