@@ -37,18 +37,6 @@ export default function HomePage() {
             >
               Home
             </Link>
-            <Link href="#" className="transition hover:text-blue-600">
-              Consultation
-            </Link>
-            <Link href="/dashboard" className="transition hover:text-blue-600">
-              Dashboard
-            </Link>
-            <Link href="/about" className="transition hover:text-blue-600">
-              About
-            </Link>
-            <Link href="/contact" className="transition hover:text-blue-600">
-              Contact
-            </Link>
           </nav>
 
           {/* Sign In */}
@@ -63,15 +51,18 @@ export default function HomePage() {
 
       {/* ================= HERO ================= */}
       <section className="py-20 text-center">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <h1 className="text-4xl font-bold">Holistic Health, Reimagined</h1>
-          <p className="text-gray-500">
-            Comprehensive wellness guidance at your fingertips
+        <div className="max-w-4xl mx-auto space-y-5">
+          <h1 className="text-4xl font-bold text-gray-800">
+            Intelligent Clinical Monitoring, Simplified
+          </h1>
+
+          <p className="text-lg text-gray-500">
+            Real-time ICU monitoring, automated alerts, and medication safety
+            intelligence designed for modern healthcare systems.
           </p>
         </div>
       </section>
 
-      {/* ================= FEATURES ================= */}
       {/* ================= FEATURES ================= */}
       <section className="max-w-6xl px-8 pb-24 mx-auto">
         <div className="grid gap-6 md:grid-cols-3">
