@@ -1,7 +1,9 @@
 "use client";
 
 import { PatientProvider, usePatients } from "@/context/PatientContext";
-import { useAuth } from "@/context/AuthContext";
+import { SettingsProvider } from "@/context/SettingsContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -19,14 +21,22 @@ import {
 } from "lucide-react";
 
 /* =========================
-   OUTER PROVIDER WRAPPER
+   OUTER WRAPPER (PROVIDERS)
 ========================= */
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <LayoutContent>{children}</LayoutContent>;
+  return (
+    <AuthProvider>
+      <SettingsProvider>
+        <PatientProvider>
+          <LayoutContent>{children}</LayoutContent>
+        </PatientProvider>
+      </SettingsProvider>
+    </AuthProvider>
+  );
 }
 
 /* =========================
@@ -43,14 +53,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const activeAlerts = alerts?.filter((a: any) => !a.resolved) || [];
+  const activeAlerts = alerts?.filter((a) => !a.resolved) || [];
 
   /* 🔐 ROUTE PROTECTION */
   useEffect(() => {
-    if (!user) {
+    if (!user && !isLoading) {
       router.replace("/login");
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
   /* 🧠 CLOSE DROPDOWN ON OUTSIDE CLICK */
   useEffect(() => {
@@ -64,15 +74,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ⛔ SHOW LOADING IF USER NULL */
-  if (isLoading) {
-    return null;
-  }
-
-  if (!user) {
-    router.replace("/login");
-    return null;
-  }
+  if (isLoading) return null;
+  if (!user) return null;
 
   return (
     <div className="flex h-screen bg-[#F4F7FB] overflow-hidden">
@@ -80,19 +83,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           SIDEBAR
       ========================= */}
       <motion.aside
-        initial={false}
         animate={{ width: collapsed ? 80 : 256 }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
-        className="relative bg-[#0F172A] text-white flex flex-col justify-between flex-shrink-0"
+        className="bg-[#0F172A] text-white flex flex-col justify-between"
       >
-        {/* ===== TOP SECTION ===== */}
+        {/* TOP */}
         <div>
-          <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="p-4 border-b border-white/10 flex justify-between items-center">
             {!collapsed && (
               <div>
-                <h1 className="text-lg font-semibold tracking-wide">
-                  MedSafe AI
-                </h1>
+                <h1 className="text-lg font-semibold">MedSafe AI</h1>
                 <p className="text-xs text-gray-400">
                   Clinical Safety Platform
                 </p>
@@ -101,13 +101,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-2 hover:bg-white/10 rounded-lg transition"
+              className="p-2 hover:bg-white/10 rounded-lg"
             >
               <Menu size={18} />
             </button>
           </div>
 
-          {/* ===== NAVIGATION ===== */}
           <nav className="p-3 space-y-2">
             <SidebarItem
               href="/dashboard"
@@ -172,31 +171,25 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* ===== BOTTOM SECTION ===== */}
+        {/* BOTTOM */}
         <div className="p-4 border-t border-white/10">
           {!collapsed && (
             <>
-              <p className="font-semibold text-gray-200">
-                {user.name || "Dr. Smith"}
-              </p>
-              <p className="text-sm text-gray-400 mb-4">
-                {user.role || "Physician"}
-              </p>
+              <p className="font-semibold">{user.name}</p>
+              <p className="text-sm text-gray-400 mb-4">{user.role}</p>
             </>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => {
               logout();
               router.replace("/login");
             }}
-            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition"
+            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
           >
             <LogOut size={16} />
             {!collapsed && "Sign Out"}
-          </motion.button>
+          </button>
         </div>
       </motion.aside>
 
@@ -204,16 +197,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           MAIN CONTENT
       ========================= */}
       <main className="flex-1 overflow-y-auto p-8 relative">
-        {/* 🔔 PROFESSIONAL NOTIFICATION SYSTEM */}
-        <div className="fixed top-6 right-8 z-[100]" ref={dropdownRef}>
+        {/* NOTIFICATION BELL */}
+        <div className="fixed top-6 right-8 z-50" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-3 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+            className="relative p-3 bg-white rounded-2xl shadow-lg"
           >
             <Bell size={20} className="text-gray-700" />
 
             {activeAlerts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full shadow-md animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full">
                 {activeAlerts.length}
               </span>
             )}
@@ -222,44 +215,26 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <AnimatePresence>
             {showNotifications && (
               <motion.div
-                initial={{ opacity: 0, y: -15, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.95 }}
-                transition={{ duration: 0.25 }}
-                className="mt-4 w-96 bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden backdrop-blur-xl"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-4 w-96 bg-white rounded-3xl shadow-xl border overflow-hidden"
               >
-                <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <h3 className="font-semibold text-gray-800">
-                    Active Notifications
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Real-time clinical alerts
-                  </p>
+                <div className="px-6 py-4 border-b bg-gray-50">
+                  <h3 className="font-semibold">Active Notifications</h3>
                 </div>
 
                 <div className="max-h-72 overflow-y-auto">
                   {activeAlerts.length > 0 ? (
-                    activeAlerts.slice(0, 6).map((alert: any) => (
+                    activeAlerts.map((alert) => (
                       <div
                         key={alert.id}
-                        className="flex items-start gap-3 px-6 py-4 border-b hover:bg-gray-50 transition"
+                        className="px-6 py-4 border-b hover:bg-gray-50"
                       >
-                        <span
-                          className={`w-2 h-2 mt-2 rounded-full ${
-                            alert.severity === "High"
-                              ? "bg-red-500"
-                              : "bg-yellow-500"
-                          }`}
-                        />
-
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">
-                            {alert.message}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {alert.severity} Priority
-                          </p>
-                        </div>
+                        <p className="text-sm font-medium">{alert.message}</p>
+                        <p className="text-xs text-gray-500">
+                          {alert.severity} Priority
+                        </p>
                       </div>
                     ))
                   ) : (
@@ -308,37 +283,25 @@ function SidebarItem({
   collapsed?: boolean;
 }) {
   return (
-    <Link href={href} className="relative block">
-      <motion.div
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className={`relative flex items-center ${
+    <Link href={href} className="block">
+      <div
+        className={`flex items-center ${
           collapsed ? "justify-center" : "justify-between"
         } px-4 py-3 rounded-xl cursor-pointer ${
-          active ? "text-white" : "text-gray-300 hover:text-white"
+          active ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-white/10"
         }`}
       >
-        {active && (
-          <motion.div
-            layoutId="activeBackground"
-            className="absolute inset-0 bg-blue-600 rounded-xl"
-          />
-        )}
-
-        <div className="relative flex items-center gap-3 z-10">
+        <div className="flex items-center gap-3">
           {icon}
-          {!collapsed && (
-            <span className="text-sm font-medium tracking-wide">{label}</span>
-          )}
+          {!collapsed && <span>{label}</span>}
         </div>
 
         {!collapsed && badge && (
-          <span className="relative z-10 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+          <span className="bg-red-500 text-xs px-2 py-1 rounded-full">
             {badge}
           </span>
         )}
-      </motion.div>
+      </div>
     </Link>
   );
 }

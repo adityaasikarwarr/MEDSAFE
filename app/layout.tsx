@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SettingsProvider } from "@/context/SettingsContext";
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 import { PatientProvider } from "@/context/PatientContext";
@@ -17,9 +18,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          <PatientProvider>
-             {children}
-          </PatientProvider>
+          <SettingsProvider>
+            <PatientProvider>
+              {children}
+            </PatientProvider>
+          </SettingsProvider>
          </AuthProvider>
       </body>
     </html>

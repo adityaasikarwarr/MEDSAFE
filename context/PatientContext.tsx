@@ -1,6 +1,11 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useSettings } from "@/context/SettingsContext";
+
+/* =========================
+   TYPES
+========================= */
 
 export type Severity = "Low" | "Medium" | "High" | "Critical";
 
@@ -29,24 +34,31 @@ type PatientContextType = {
   addPatient: (patient: Patient) => void;
   updatePatient: (patient: Patient) => void;
   deletePatient: (id: number) => void;
-  createAlert: (data: {
-    patientId: number;
-    message: string;
-    severity: Severity;
-  }) => void;
   resolveAlert: (id: number) => void;
 };
 
+/* =========================
+   CONTEXT
+========================= */
+
 const PatientContext = createContext<PatientContextType | null>(null);
 
+/* =========================
+   PROVIDER
+========================= */
+
 export function PatientProvider({ children }: { children: React.ReactNode }) {
+  const { settings } = useSettings();
+
   const [patients, setPatients] = useState<Patient[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
-  // Load from localStorage
+  /* =========================
+     LOAD FROM STORAGE
+  ========================= */
   useEffect(() => {
-    const storedPatients = localStorage.getItem("patients");
-    const storedAlerts = localStorage.getItem("alerts");
+    const storedPatients = localStorage.getItem("medsafe-patients");
+    const storedAlerts = localStorage.getItem("medsafe-alerts");
 
     if (storedPatients) {
       setPatients(JSON.parse(storedPatients));
@@ -57,71 +69,29 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Persist
+  /* =========================
+     SAVE TO STORAGE
+  ========================= */
   useEffect(() => {
-    localStorage.setItem("patients", JSON.stringify(patients));
+    localStorage.setItem("medsafe-patients", JSON.stringify(patients));
   }, [patients]);
 
   useEffect(() => {
-    setAlerts((prevAlerts) =>
-      prevAlerts.filter((alert) =>
-        patients.some((p) => p.id === alert.patientId),
-      ),
-    );
-  }, [patients]);
-
-  useEffect(() => {
-    localStorage.setItem("alerts", JSON.stringify(alerts));
+    localStorage.setItem("medsafe-alerts", JSON.stringify(alerts));
   }, [alerts]);
 
-  const addPatient = (patient: Patient) => {
-    setPatients((prev) => [...prev, patient]);
-
-    if (patient.risk === "Critical") {
-      createAlert({
-        patientId: patient.id,
-        message: `${patient.name} is in critical condition`,
-        severity: "Critical",
-      });
-    }
-  };
-
-  const updatePatient = (updatedPatient: Patient) => {
-    setPatients((prev) =>
-      prev.map((p) => {
-        if (p.id !== updatedPatient.id) return p;
-
-        // 🔥 If patient becomes Critical → create alert
-        if (p.risk !== "Critical" && updatedPatient.risk === "Critical") {
-          createAlert({
-            patientId: updatedPatient.id,
-            message: `${updatedPatient.name} entered critical condition`,
-            severity: "Critical",
-          });
-        }
-
-        // 🔥 If patient improves → auto resolve alerts
-        if (p.risk === "Critical" && updatedPatient.risk !== "Critical") {
-          setAlerts((prevAlerts) =>
-            prevAlerts.map((a) =>
-              a.patientId === updatedPatient.id && !a.resolved
-                ? { ...a, resolved: true }
-                : a,
-            ),
-          );
-        }
-
-        return updatedPatient;
-      }),
+  /* =========================
+     CLEAN ORPHAN ALERTS
+  ========================= */
+  useEffect(() => {
+    setAlerts((prev) =>
+      prev.filter((alert) => patients.some((p) => p.id === alert.patientId)),
     );
-  };
+  }, [patients]);
 
-  const deletePatient = (id: number) => {
-    setPatients((prev) => prev.filter((p) => p.id !== id));
-
-    setAlerts((prev) => prev.filter((alert) => alert.patientId !== id));
-  };
-
+  /* =========================
+     CREATE ALERT
+  ========================= */
   const createAlert = ({
     patientId,
     message,
@@ -131,6 +101,8 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     message: string;
     severity: Severity;
   }) => {
+    if (!settings.notificationsEnabled) return;
+
     setAlerts((prev) => {
       const alreadyExists = prev.some(
         (a) =>
@@ -152,6 +124,67 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  /* =========================
+     ADD PATIENT
+  ========================= */
+  const addPatient = (patient: Patient) => {
+    setPatients((prev) => [...prev, patient]);
+
+    if (patient.risk === "Critical") {
+      createAlert({
+        patientId: patient.id,
+        message: `${patient.name} entered critical condition`,
+        severity: "Critical",
+      });
+    }
+  };
+
+  /* =========================
+     UPDATE PATIENT
+  ========================= */
+  const updatePatient = (updatedPatient: Patient) => {
+    setPatients((prev) =>
+      prev.map((p) => {
+        if (p.id !== updatedPatient.id) return p;
+
+        /* New critical event */
+        if (p.risk !== "Critical" && updatedPatient.risk === "Critical") {
+          createAlert({
+            patientId: updatedPatient.id,
+            message: `${updatedPatient.name} entered critical condition`,
+            severity: "Critical",
+          });
+        }
+
+        /* Auto resolve if enabled */
+        if (
+          settings.autoResolveAlerts &&
+          p.risk === "Critical" &&
+          updatedPatient.risk !== "Critical"
+        ) {
+          setAlerts((prevAlerts) =>
+            prevAlerts.map((a) =>
+              a.patientId === updatedPatient.id ? { ...a, resolved: true } : a,
+            ),
+          );
+        }
+
+        return updatedPatient;
+      }),
+    );
+  };
+
+  /* =========================
+     DELETE PATIENT
+  ========================= */
+  const deletePatient = (id: number) => {
+    setPatients((prev) => prev.filter((p) => p.id !== id));
+    setAlerts((prev) => prev.filter((alert) => alert.patientId !== id));
+  };
+
+  /* =========================
+     RESOLVE ALERT
+  ========================= */
   const resolveAlert = (id: number) => {
     setAlerts((prev) =>
       prev.map((a) => (a.id === id ? { ...a, resolved: true } : a)),
@@ -166,7 +199,6 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         addPatient,
         updatePatient,
         deletePatient,
-        createAlert,
         resolveAlert,
       }}
     >
@@ -174,6 +206,10 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     </PatientContext.Provider>
   );
 }
+
+/* =========================
+   HOOK
+========================= */
 
 export function usePatients() {
   const context = useContext(PatientContext);

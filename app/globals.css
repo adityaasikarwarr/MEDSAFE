@@ -84,3 +84,11 @@ body {
 .animation-delay-2000 {
   animation-delay: 2s;
 }
+ html.dark {
+  background: #0f172a;
+}
+
+html.dark body {
+  background: #0f172a;
+  color: white;
+}
