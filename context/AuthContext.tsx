@@ -1,5 +1,6 @@
 "use client";
 
+import { User } from "@/types/user";
 import { createContext, useContext, useState, useEffect } from "react";
 
 export type Role = "Admin" | "Doctor" | "Nurse" | "Analyst";

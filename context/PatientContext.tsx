@@ -1,32 +1,13 @@
 "use client";
 
+import { Patient, Severity } from "@/types/patient";
+import { Alert } from "@/types/alert";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 
 /* =========================
    TYPES
 ========================= */
-
-export type Severity = "Low" | "Medium" | "High" | "Critical";
-
-export type Patient = {
-  id: number;
-  name: string;
-  age: number;
-  department: string;
-  risk: Severity;
-  status: string;
-  medications?: string[];
-};
-
-export type Alert = {
-  id: number;
-  patientId: number;
-  message: string;
-  severity: Severity;
-  timestamp: string;
-  resolved: boolean;
-};
 
 type PatientContextType = {
   patients: Patient[];

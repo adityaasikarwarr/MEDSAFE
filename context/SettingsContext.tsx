@@ -1,5 +1,6 @@
 "use client";
 
+import { User } from "@/types/user";
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type Settings = {
