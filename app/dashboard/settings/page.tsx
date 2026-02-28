@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { User, Bell, Shield, Palette } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, login } = useAuth();
@@ -27,26 +28,26 @@ export default function SettingsPage() {
       role,
       email: user.email,
     });
-
-    alert("Profile Updated Successfully");
   };
 
   return (
-    <div className="space-y-10 max-w-4xl">
-      <Section title="Profile Settings">
+    <div className="space-y-10 max-w-5xl">
+      <Header />
+
+      <AnimatedSection icon={<User size={18} />} title="Profile Settings">
         <Input label="Full Name" value={name} onChange={setName} />
         <Input label="Role" value={role} onChange={setRole} />
 
         <button
           onClick={saveProfile}
-          className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-2 rounded-xl"
+          className="mt-4 bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-2 rounded-xl shadow-md"
         >
           Save Profile
         </button>
-      </Section>
+      </AnimatedSection>
 
-      <Section title="Theme Preferences">
-        <Toggle
+      <AnimatedSection icon={<Palette size={18} />} title="Theme Preferences">
+        <ModernToggle
           label="Dark Mode"
           enabled={settings.theme === "dark"}
           onToggle={() =>
@@ -55,10 +56,10 @@ export default function SettingsPage() {
             })
           }
         />
-      </Section>
+      </AnimatedSection>
 
-      <Section title="Notification Settings">
-        <Toggle
+      <AnimatedSection icon={<Bell size={18} />} title="Notification Settings">
+        <ModernToggle
           label="Enable Notifications"
           enabled={settings.notificationsEnabled}
           onToggle={() =>
@@ -68,7 +69,7 @@ export default function SettingsPage() {
           }
         />
 
-        <Toggle
+        <ModernToggle
           label="ICU Auto Monitoring"
           enabled={settings.icuAutoMonitoring}
           onToggle={() =>
@@ -78,7 +79,7 @@ export default function SettingsPage() {
           }
         />
 
-        <Toggle
+        <ModernToggle
           label="Auto Resolve Alerts"
           enabled={settings.autoResolveAlerts}
           onToggle={() =>
@@ -87,27 +88,49 @@ export default function SettingsPage() {
             })
           }
         />
-      </Section>
+      </AnimatedSection>
     </div>
   );
 }
 
-/* ========================= */
+/* ========================= COMPONENTS ========================= */
 
-function Section({
+function Header() {
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
+      <p className="text-gray-500 mt-1">
+        Manage your profile and system preferences
+      </p>
+    </div>
+  );
+}
+
+function AnimatedSection({
+  icon,
   title,
   children,
 }: {
+  icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 transition rounded-2xl shadow border border-gray-100 dark:border-slate-700 p-6">
-      <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-6">
-        {title}
-      </h2>
-      <div className="space-y-4">{children}</div>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 space-y-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+          {icon}
+        </div>
+        <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+      </div>
+
+      {children}
+    </motion.div>
   );
 }
 
@@ -122,19 +145,17 @@ function Input({
 }) {
   return (
     <div>
-      <label className="text-sm text-gray-600 dark:text-gray-300">
-        {label}
-      </label>
+      <label className="text-sm text-gray-500">{label}</label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white transition"
+        className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
       />
     </div>
   );
 }
 
-function Toggle({
+function ModernToggle({
   label,
   enabled,
   onToggle,
@@ -145,23 +166,24 @@ function Toggle({
 }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+      <span className="text-gray-700">{label}</span>
 
-      <button
+      <motion.button
         onClick={onToggle}
-        className={`w-12 h-6 rounded-full transition-all duration-300 ${
+        whileTap={{ scale: 0.95 }}
+        className={`w-14 h-7 rounded-full relative transition-all duration-300 ${
           enabled ? "bg-blue-600" : "bg-gray-300"
-        } relative`}
+        }`}
       >
         <motion.div
           layout
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className={`w-5 h-5 bg-white rounded-full absolute top-0.5`}
+          className="w-6 h-6 bg-white rounded-full absolute top-0.5"
           style={{
-            left: enabled ? "calc(100% - 22px)" : "2px",
+            left: enabled ? "calc(100% - 26px)" : "2px",
           }}
         />
-      </button>
+      </motion.button>
     </div>
   );
 }
