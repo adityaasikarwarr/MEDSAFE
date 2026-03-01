@@ -3,13 +3,9 @@
 import { usePatients } from "@/context/PatientContext";
 import { useAuth } from "@/context/AuthContext";
 import { getPermissions } from "@/engine/permissionEngine";
-import type { Patient } from "@/types/patient";
-import type { Severity } from "@/types/patient";
+import type { Patient, Severity } from "@/types/patient";
 import { useState } from "react";
-import { Search, Plus, X, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-
-type StatusType = "Admitted" | "Stable";
+import { Search, Plus, X } from "lucide-react";
 
 export default function PatientsPage() {
   const { patients, addPatient, updatePatient, deletePatient } = usePatients();
@@ -21,30 +17,38 @@ export default function PatientsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
 
-  const [formData, setFormData] = useState<Omit<Patient, "id">>({
+  const initialForm: Omit<Patient, "id"> = {
     name: "",
     age: 0,
     department: "",
+    diagnosis: "",
+    bedNumber: "",
+    heartRate: 80,
+    oxygenLevel: 98,
+    bloodPressure: "120/80",
     risk: "Low",
     status: "Stable",
+    admittedAt: new Date().toISOString(),
+    assignedDoctor: "",
     medications: [],
-    bedNumber: "",
-  });
+  };
+
+  const [formData, setFormData] = useState(initialForm);
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name || !formData.department) return;
 
     if (editingPatientId !== null) {
-      updatePatient({
+      await updatePatient({
         id: editingPatientId,
         ...formData,
       });
     } else {
-      addPatient({
+      await addPatient({
         id: Date.now(),
         ...formData,
       });
@@ -54,14 +58,7 @@ export default function PatientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      age: 0,
-      department: "",
-      risk: "Low",
-      status: "Stable",
-      medications: [],
-    });
+    setFormData(initialForm);
     setEditingPatientId(null);
     setShowModal(false);
   };
@@ -70,20 +67,29 @@ export default function PatientsPage() {
     if (!permissions?.canEditPatient) return;
 
     setEditingPatientId(patient.id);
+
     setFormData({
       name: patient.name,
       age: patient.age,
       department: patient.department,
+      diagnosis: patient.diagnosis,
+      bedNumber: patient.bedNumber,
+      heartRate: patient.heartRate,
+      oxygenLevel: patient.oxygenLevel,
+      bloodPressure: patient.bloodPressure,
       risk: patient.risk,
       status: patient.status,
+      admittedAt: patient.admittedAt,
+      assignedDoctor: patient.assignedDoctor,
       medications: patient.medications || [],
     });
+
     setShowModal(true);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
@@ -101,7 +107,7 @@ export default function PatientsPage() {
         )}
       </div>
 
-      {/* Search */}
+      {/* SEARCH */}
       <div className="flex items-center gap-3 p-4 bg-white shadow rounded-xl">
         <Search className="text-gray-400" size={18} />
         <input
@@ -113,20 +119,16 @@ export default function PatientsPage() {
         />
       </div>
 
-      {/* Table */}
+      {/* TABLE */}
       <div className="overflow-hidden bg-white shadow rounded-xl">
         <table className="w-full text-left">
           <thead className="border-b bg-gray-50">
             <tr>
               <th className="p-4 text-sm font-semibold text-gray-600">Name</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">Age</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">
-                Department
-              </th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Bed</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">HR</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">O₂</th>
               <th className="p-4 text-sm font-semibold text-gray-600">Risk</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">
-                Status
-              </th>
               <th className="p-4 text-sm font-semibold text-gray-600">
                 Actions
               </th>
@@ -140,13 +142,11 @@ export default function PatientsPage() {
                   <td className="p-4 font-semibold text-gray-900">
                     {patient.name}
                   </td>
-                  <td className="p-4">{patient.age}</td>
-                  <td className="p-4">{patient.department}</td>
+                  <td className="p-4">{patient.bedNumber}</td>
+                  <td className="p-4">{patient.heartRate}</td>
+                  <td className="p-4">{patient.oxygenLevel}%</td>
                   <td className="p-4">
                     <RiskBadge risk={patient.risk} />
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={patient.status as StatusType} />
                   </td>
                   <td className="p-4 space-x-3">
                     {permissions?.canEditPatient && (
@@ -180,13 +180,13 @@ export default function PatientsPage() {
         </table>
       </div>
 
-      {/* Modal */}
+      {/* MODAL */}
       {showModal && permissions?.canEditPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg">
           <div className="p-6 space-y-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-96">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingPatientId !== null ? "Edit Patient" : "Add Patient"}
+                {editingPatientId ? "Edit Patient" : "Add Patient"}
               </h2>
               <button onClick={resetForm}>
                 <X size={18} />
@@ -204,28 +204,8 @@ export default function PatientsPage() {
             />
 
             <input
-              type="number"
-              placeholder="Age"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
-              value={formData.age}
-              onChange={(e) =>
-                setFormData({ ...formData, age: Number(e.target.value) })
-              }
-            />
-
-            <input
               type="text"
-              placeholder="Department"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
-              value={formData.department}
-              onChange={(e) =>
-                setFormData({ ...formData, department: e.target.value })
-              }
-            />
-
-            <input
-              type="text"
-              placeholder="ICU Bed (e.g. A1)"
+              placeholder="ICU Bed"
               className="w-full px-4 py-2 border border-gray-300 rounded-xl"
               value={formData.bedNumber}
               onChange={(e) =>
@@ -233,11 +213,37 @@ export default function PatientsPage() {
               }
             />
 
+            <input
+              type="number"
+              placeholder="Heart Rate"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
+              value={formData.heartRate}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  heartRate: Number(e.target.value),
+                })
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Oxygen Level"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
+              value={formData.oxygenLevel}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  oxygenLevel: Number(e.target.value),
+                })
+              }
+            />
+
             <button
               onClick={handleSubmit}
               className="w-full py-2 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
             >
-              {editingPatientId !== null ? "Update" : "Add"}
+              {editingPatientId ? "Update" : "Add"}
             </button>
           </div>
         </div>
@@ -259,19 +265,6 @@ function RiskBadge({ risk }: { risk: Severity }) {
   return (
     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles}`}>
       {risk}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: StatusType }) {
-  const styles =
-    status === "Admitted"
-      ? "bg-blue-100 text-blue-600"
-      : "bg-green-100 text-green-600";
-
-  return (
-    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles}`}>
-      {status}
     </span>
   );
 }

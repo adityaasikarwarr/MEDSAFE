@@ -1,13 +1,23 @@
 export type Severity = "Low" | "Medium" | "High" | "Critical";
 
-export interface Patient {
+export type Patient = {
   id: number;
   name: string;
   age: number;
   department: string;
+
+  diagnosis: string;
+  bedNumber: string;
+
+  heartRate: number;
+  oxygenLevel: number;
+  bloodPressure: string;
+
   risk: Severity;
-  status: string;
-  medications?: string[];
-  bedNumber?: string;
-  admittedAt?: string;
-}
+  status: "Stable" | "Admitted" | "Critical";
+
+  admittedAt: string;
+  assignedDoctor: string;
+
+  medications: string[];
+};
