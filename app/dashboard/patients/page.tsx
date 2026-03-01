@@ -10,7 +10,6 @@ import { Search, Plus, X } from "lucide-react";
 export default function PatientsPage() {
   const { patients, addPatient, updatePatient, deletePatient } = usePatients();
   const { user } = useAuth();
-
   const permissions = user ? getPermissions(user.role) : null;
 
   const [search, setSearch] = useState("");
@@ -67,190 +66,216 @@ export default function PatientsPage() {
     if (!permissions?.canEditPatient) return;
 
     setEditingPatientId(patient.id);
-
-    setFormData({
-      name: patient.name,
-      age: patient.age,
-      department: patient.department,
-      diagnosis: patient.diagnosis,
-      bedNumber: patient.bedNumber,
-      heartRate: patient.heartRate,
-      oxygenLevel: patient.oxygenLevel,
-      bloodPressure: patient.bloodPressure,
-      risk: patient.risk,
-      status: patient.status,
-      admittedAt: patient.admittedAt,
-      assignedDoctor: patient.assignedDoctor,
-      medications: patient.medications || [],
-    });
-
+    setFormData({ ...patient });
     setShowModal(true);
   };
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
-          <p className="text-gray-500">Manage and monitor patients</p>
+    <>
+      <div className="space-y-6">
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Patients</h1>
+            <p className="text-gray-500">ICU & Department Patient Management</p>
+          </div>
+
+          {permissions?.canEditPatient && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-white transition shadow bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:opacity-90"
+            >
+              <Plus size={16} />
+              Add Patient
+            </button>
+          )}
         </div>
 
-        {permissions?.canEditPatient && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            <Plus size={16} />
-            Add Patient
-          </button>
-        )}
-      </div>
+        {/* SEARCH */}
+        <div className="flex items-center gap-3 p-4 bg-white shadow rounded-xl">
+          <Search size={18} className="text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search patients..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full outline-none"
+          />
+        </div>
 
-      {/* SEARCH */}
-      <div className="flex items-center gap-3 p-4 bg-white shadow rounded-xl">
-        <Search className="text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search patients..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full text-black outline-none"
-        />
-      </div>
+        {/* TABLE */}
+        <div className="overflow-hidden bg-white shadow rounded-xl">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="p-4">Name</th>
+                <th className="p-4">Bed</th>
+                <th className="p-4">Heart Rate</th>
+                <th className="p-4">O₂</th>
+                <th className="p-4">Risk</th>
+                <th className="p-4">Actions</th>
+              </tr>
+            </thead>
 
-      {/* TABLE */}
-      <div className="overflow-hidden bg-white shadow rounded-xl">
-        <table className="w-full text-left">
-          <thead className="border-b bg-gray-50">
-            <tr>
-              <th className="p-4 text-sm font-semibold text-gray-600">Name</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">Bed</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">HR</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">O₂</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">Risk</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">
-                Actions
-              </th>
-            </tr>
-          </thead>
+            <tbody>
+              {filteredPatients.length > 0 ? (
+                filteredPatients.map((patient) => (
+                  <tr key={patient.id} className="border-t hover:bg-gray-50">
+                    <td className="p-4 font-medium">{patient.name}</td>
+                    <td className="p-4">{patient.bedNumber}</td>
+                    <td className="p-4">{patient.heartRate}</td>
+                    <td className="p-4">{patient.oxygenLevel}%</td>
+                    <td className="p-4">
+                      <RiskBadge risk={patient.risk} />
+                    </td>
+                    <td className="p-4 space-x-3">
+                      {permissions?.canEditPatient && (
+                        <button
+                          onClick={() => editPatient(patient)}
+                          className="text-blue-600 hover:underline"
+                        >
+                          Edit
+                        </button>
+                      )}
 
-          <tbody>
-            {filteredPatients.length > 0 ? (
-              filteredPatients.map((patient) => (
-                <tr key={patient.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-gray-900">
-                    {patient.name}
-                  </td>
-                  <td className="p-4">{patient.bedNumber}</td>
-                  <td className="p-4">{patient.heartRate}</td>
-                  <td className="p-4">{patient.oxygenLevel}%</td>
-                  <td className="p-4">
-                    <RiskBadge risk={patient.risk} />
-                  </td>
-                  <td className="p-4 space-x-3">
-                    {permissions?.canEditPatient && (
-                      <button
-                        onClick={() => editPatient(patient)}
-                        className="text-blue-600 hover:underline"
-                      >
-                        Edit
-                      </button>
-                    )}
-
-                    {permissions?.canDeletePatient && (
-                      <button
-                        onClick={() => deletePatient(patient.id)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    )}
+                      {permissions?.canDeletePatient && (
+                        <button
+                          onClick={() => deletePatient(patient.id)}
+                          className="text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-gray-500">
+                    No patients found.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-500">
-                  No patients found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* MODAL */}
       {showModal && permissions?.canEditPatient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg">
-          <div className="p-6 space-y-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-96">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-[650px] max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl p-8 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold text-gray-800">
                 {editingPatientId ? "Edit Patient" : "Add Patient"}
               </h2>
               <button onClick={resetForm}>
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            <input
-              type="text"
-              placeholder="Name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Full Name"
+                value={formData.name}
+                onChange={(v) => setFormData({ ...formData, name: v })}
+              />
 
-            <input
-              type="text"
-              placeholder="ICU Bed"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
-              value={formData.bedNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, bedNumber: e.target.value })
-              }
-            />
+              <Input
+                type="number"
+                label="Age"
+                value={String(formData.age)}
+                onChange={(v) => setFormData({ ...formData, age: Number(v) })}
+              />
 
-            <input
-              type="number"
-              placeholder="Heart Rate"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
-              value={formData.heartRate}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  heartRate: Number(e.target.value),
-                })
-              }
-            />
+              <Input
+                label="Department"
+                value={formData.department}
+                onChange={(v) => setFormData({ ...formData, department: v })}
+              />
 
-            <input
-              type="number"
-              placeholder="Oxygen Level"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl"
-              value={formData.oxygenLevel}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  oxygenLevel: Number(e.target.value),
-                })
-              }
-            />
+              <Input
+                label="Diagnosis"
+                value={formData.diagnosis}
+                onChange={(v) => setFormData({ ...formData, diagnosis: v })}
+              />
+
+              <Input
+                label="ICU Bed"
+                value={formData.bedNumber}
+                onChange={(v) => setFormData({ ...formData, bedNumber: v })}
+              />
+
+              <Input
+                label="Assigned Doctor"
+                value={formData.assignedDoctor}
+                onChange={(v) =>
+                  setFormData({ ...formData, assignedDoctor: v })
+                }
+              />
+
+              <Input
+                type="number"
+                label="Heart Rate"
+                value={String(formData.heartRate)}
+                onChange={(v) =>
+                  setFormData({ ...formData, heartRate: Number(v) })
+                }
+              />
+
+              <Input
+                type="number"
+                label="Oxygen Level"
+                value={String(formData.oxygenLevel)}
+                onChange={(v) =>
+                  setFormData({ ...formData, oxygenLevel: Number(v) })
+                }
+              />
+
+              <Input
+                label="Blood Pressure"
+                value={formData.bloodPressure}
+                onChange={(v) => setFormData({ ...formData, bloodPressure: v })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Risk Level"
+                value={formData.risk}
+                options={["Low", "Medium", "High", "Critical"]}
+                onChange={(v) =>
+                  setFormData({ ...formData, risk: v as Severity })
+                }
+              />
+
+              <Select
+                label="Status"
+                value={formData.status}
+                options={["Stable", "Admitted", "Critical"]}
+                onChange={(v) =>
+                  setFormData({
+                    ...formData,
+                    status: v as Patient["status"],
+                  })
+                }
+              />
+            </div>
 
             <button
               onClick={handleSubmit}
-              className="w-full py-2 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="w-full py-3 font-medium text-white transition bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:opacity-90"
             >
-              {editingPatientId ? "Update" : "Add"}
+              {editingPatientId ? "Update Patient" : "Add Patient"}
             </button>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
+
+/* ---------------- COMPONENTS ---------------- */
 
 function RiskBadge({ risk }: { risk: Severity }) {
   const styles =
@@ -266,5 +291,56 @@ function RiskBadge({ risk }: { risk: Severity }) {
     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles}`}>
       {risk}
     </span>
+  );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
+  return (
+    <div className="flex flex-col space-y-1">
+      <label className="text-sm text-gray-600">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="px-4 py-2 transition border outline-none rounded-xl focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col space-y-1">
+      <label className="text-sm text-gray-600">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="px-4 py-2 transition border outline-none rounded-xl focus:ring-2 focus:ring-blue-500"
+      >
+        {options.map((opt) => (
+          <option key={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
   );
 }
