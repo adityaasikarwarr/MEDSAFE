@@ -39,11 +39,11 @@ export default function DashboardLayout({
   const userPermissions = user ? getPermissions(user.role) : null;
 
   /* 🔐 Route Protection */
-  useEffect(() => {
-    if (!user) {
-      router.replace("/");
-    }
-  }, [user, router]);
+  // useEffect(() => {
+  //   if (!user) {
+  //     router.replace("/");
+  //   }
+  // }, [user, router]);
 
   /* Close Notification Dropdown */
   useEffect(() => {

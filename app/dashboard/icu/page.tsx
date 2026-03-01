@@ -51,12 +51,12 @@ export default function ICUPage() {
       </div>
 
       {patients.length === 0 && (
-        <div className="bg-white p-12 rounded-2xl shadow text-center text-gray-500">
+        <div className="p-12 text-center text-gray-500 bg-white shadow rounded-2xl">
           No patients currently under ICU monitoring.
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {patients.map((patient) => {
           const data = vitals[patient.id];
 
@@ -67,12 +67,12 @@ export default function ICUPage() {
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
-              className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-5"
+              className="p-6 space-y-5 bg-white border border-gray-100 shadow-lg rounded-2xl"
             >
               {/* Header */}
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-800">
                     <User size={16} /> {patient.name}
                   </h2>
                   <p className="text-sm text-gray-500">{patient.department}</p>
@@ -151,7 +151,7 @@ function RiskBadge({ risk }: { risk: string }) {
 function Info({ label, value }: { label: string; value: any }) {
   return (
     <div>
-      <p className="text-gray-400 text-xs">{label}</p>
+      <p className="text-xs text-gray-400">{label}</p>
       <p className="font-medium text-gray-700">{value}</p>
     </div>
   );
@@ -176,7 +176,7 @@ function VitalBar({
 
   return (
     <div>
-      <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
+      <div className="flex items-center justify-between mb-1 text-sm text-gray-600">
         <span className="flex items-center gap-2">
           {icon} {label}
         </span>
@@ -185,7 +185,7 @@ function VitalBar({
         </span>
       </div>
 
-      <div className="w-full bg-gray-200 h-2 rounded-full">
+      <div className="w-full h-2 bg-gray-200 rounded-full">
         <motion.div
           className={`h-2 rounded-full ${color}`}
           initial={{ width: 0 }}
