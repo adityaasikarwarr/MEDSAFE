@@ -11,12 +11,26 @@ export default function PatientDetailPage() {
 
   const [patient, setPatient] = useState<Patient | null>(null);
 
+  const [activity] = useState([
+    { id: 1, message: "Vitals updated", time: "2 min ago" },
+    { id: 2, message: "Medication added", time: "10 min ago" },
+    { id: 3, message: "Risk recalculated", time: "15 min ago" },
+  ]);
+
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+
     async function load() {
       const data = await patientService.getPatientById(id);
       if (data) setPatient(data);
     }
-    if (id) load();
+
+    if (id) {
+      load();
+      interval = setInterval(load, 5000);
+    }
+
+    return () => clearInterval(interval);
   }, [id]);
 
   if (!patient) {
@@ -39,8 +53,6 @@ export default function PatientDetailPage() {
   };
 
   const getVitalColor = (type: "hr" | "o2") => {
-    if (!patient) return "";
-
     if (type === "hr") {
       if (patient.vitals.hr > 120 || patient.vitals.hr < 50)
         return "text-red-600";
@@ -56,61 +68,114 @@ export default function PatientDetailPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
-        <h1 className="text-2xl font-bold">{patient.name}</h1>
-        <p>ICU Bed: {patient.icuBed}</p>
-        <p>Doctor: {patient.assignedDoctor}</p>
-      </div>
+    <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
 
-      <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
-        <h2 className="mb-2 font-semibold">Diagnosis</h2>
-        <p>{patient.diagnosis}</p>
-      </div>
+      {/* LEFT SIDE (2 Columns) */}
+      <div className="space-y-6 lg:col-span-2">
 
-      <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
-        <h2 className="mb-4 font-semibold">Vitals</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm">HR</p>
-            <p className={`text-xl font-semibold ${getVitalColor("hr")}`}>
-              {patient.vitals.hr}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm">O2</p>
-            <p className={`text-xl font-semibold ${getVitalColor("o2")}`}>
-              {patient.vitals.o2}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm">BP</p>
-            <p className="text-xl font-semibold">{patient.vitals.bp}</p>
+        {/* Profile */}
+        <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
+          <h1 className="text-2xl font-bold">{patient.name}</h1>
+          <p className="text-sm text-muted-foreground">
+            ICU Bed: {patient.icuBed}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Doctor: {patient.assignedDoctor}
+          </p>
+        </div>
+
+        {/* Diagnosis */}
+        <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
+          <h2 className="mb-2 font-semibold">Diagnosis</h2>
+          <p>{patient.diagnosis}</p>
+        </div>
+
+        {/* Vitals */}
+        <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
+          <h2 className="mb-4 font-semibold">Vitals</h2>
+
+          <div className="grid grid-cols-3 gap-6">
+
+            <div>
+              <p className="text-sm text-muted-foreground">HR</p>
+              <p className={`text-xl font-semibold ${getVitalColor("hr")}`}>
+                {patient.vitals.hr}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">O2</p>
+              <p className={`text-xl font-semibold ${getVitalColor("o2")}`}>
+                {patient.vitals.o2}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">BP</p>
+              <p className="text-xl font-semibold">
+                {patient.vitals.bp}
+              </p>
+            </div>
+
           </div>
         </div>
+
+        {/* Risk */}
+        <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
+          <h2 className="mb-4 font-semibold">Risk Status</h2>
+          <span
+            className={`px-4 py-2 rounded-full text-sm font-semibold ${getRiskStyle(
+              patient.riskLevel
+            )}`}
+          >
+            {patient.riskLevel}
+          </span>
+        </div>
+
       </div>
 
-      <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
-        <h2 className="mb-2 font-semibold">Risk</h2>
-        <span
-          className={`px-4 py-2 rounded-full text-sm font-semibold ${getRiskStyle(
-            patient.riskLevel,
-          )}`}
-        >
-          {patient.riskLevel}
-        </span>
-      </div>
+      {/* RIGHT SIDE (1 Column) */}
+      <div className="space-y-6">
 
-      <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
-        <h2 className="mb-4 font-semibold">Medications</h2>
-        {patient.medications.map((med) => (
-          <div key={med.id} className="p-3 mb-2 border rounded-lg">
-            <p className="font-medium">{med.name}</p>
-            <p className="text-sm">
-              {med.dosage} • {med.frequency}
+        {/* Medications */}
+        <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
+          <h2 className="mb-4 font-semibold">Medications</h2>
+
+          {patient.medications.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No medications assigned
             </p>
+          )}
+
+          {patient.medications.map((med) => (
+            <div key={med.id} className="p-3 mb-3 border rounded-lg">
+              <p className="font-medium">{med.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {med.dosage} • {med.frequency}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Activity Timeline */}
+        <div className="p-6 bg-white shadow dark:bg-zinc-900 rounded-2xl">
+          <h2 className="mb-4 font-semibold">Activity Timeline</h2>
+
+          <div className="space-y-4">
+            {activity.map((item) => (
+              <div key={item.id} className="flex items-start gap-3">
+                <div className="w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">{item.message}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.time}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
       </div>
     </div>
   );
