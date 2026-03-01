@@ -20,10 +20,10 @@ export const patientService = {
     return getStorage();
   },
 
-  async getPatientById(id: string): Promise<Patient | undefined> {
-    const patients = getStorage();
-    return patients.find((p) => p.id === id);
-  },
+ async getPatientById(id: string) {
+  const patients = await this.getAll();
+  return patients.find((p) => String(p.id) === String(id));
+},
 
   async create(patient: Patient): Promise<void> {
     const patients = getStorage();

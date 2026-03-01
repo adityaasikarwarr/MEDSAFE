@@ -1,21 +1,5 @@
-export interface Vitals {
-  hr: number;
-  o2: number;
-  bp: string;
-}
-
-export interface Medication {
-  id: string;
-  name: string;
-  dosage: string;
-  frequency: string;
-}
-
-export type RiskLevel =
-  | "LOW"
-  | "MODERATE"
-  | "HIGH"
-  | "CRITICAL";
+export type RiskLevel = "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
+export type Status = "ACTIVE" | "RESOLVED";
 
 export interface Patient {
   id: string;
@@ -23,7 +7,19 @@ export interface Patient {
   icuBed: string;
   diagnosis: string;
   assignedDoctor: string;
-  vitals: Vitals;
   riskLevel: RiskLevel;
-  medications: Medication[];
+  status: Status;
+
+  vitals: {
+    hr: number;
+    o2: number;
+    bp: string;
+  };
+
+  medications: {
+    id: string;
+    name: string;
+    dosage: string;
+    frequency: string;
+  }[];
 }
