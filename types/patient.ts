@@ -1,25 +1,22 @@
-export type RiskLevel = "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
-export type Status = "ACTIVE" | "RESOLVED";
+export type Severity = "Low" | "Medium" | "High" | "Critical";
 
 export interface Patient {
-  id: string;
+  id: number;
   name: string;
-  icuBed: string;
+  age: number;
+  gender: string;
+
+  department: string;
   diagnosis: string;
-  assignedDoctor: string;
-  riskLevel: RiskLevel;
-  status: Status;
+
+  status: string;
+  risk: Severity;
+
+  medications: string[];
 
   vitals: {
     hr: number;
     o2: number;
     bp: string;
   };
-
-  medications: {
-    id: string;
-    name: string;
-    dosage: string;
-    frequency: string;
-  }[];
 }

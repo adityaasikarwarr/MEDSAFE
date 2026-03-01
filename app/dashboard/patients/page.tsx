@@ -6,19 +6,24 @@ import { Patient } from "@/types/patient";
 import { motion } from "framer-motion";
 
 export default function PatientsPage() {
-  const { patients, addPatient } = usePatients();
-  const [showModal, setShowModal] = useState(false);
+  const { patients, addPatient, updatePatient, deletePatient } = usePatients();
 
-  const [form, setForm] = useState({
+  const [showModal, setShowModal] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+
+  const emptyForm = {
     name: "",
     age: "",
     gender: "Male",
     department: "ICU",
     diagnosis: "",
+    risk: "Low",
     heartRate: "",
     oxygen: "",
     bloodPressure: "",
-  });
+  };
+
+  const [form, setForm] = useState<any>(emptyForm);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -26,18 +31,40 @@ export default function PatientsPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  function openAddModal() {
+    setEditingPatient(null);
+    setForm(emptyForm);
+    setShowModal(true);
+  }
+
+  function openEditModal(patient: Patient) {
+    setEditingPatient(patient);
+    setForm({
+      name: patient.name,
+      age: patient.age,
+      gender: patient.gender,
+      department: patient.department,
+      diagnosis: patient.diagnosis,
+      risk: patient.risk,
+      heartRate: patient.vitals?.hr || "",
+      oxygen: patient.vitals?.o2 || "",
+      bloodPressure: patient.vitals?.bp || "",
+    });
+    setShowModal(true);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const newPatient: Patient = {
-      id: Date.now(),
+    const patientData: Patient = {
+      id: editingPatient ? editingPatient.id : Date.now(),
       name: form.name,
       age: Number(form.age),
-      gender: form.gender as any,
+      gender: form.gender,
       department: form.department,
       diagnosis: form.diagnosis,
       status: "Admitted",
-      risk: "Low",
+      risk: form.risk,
       medications: [],
       vitals: {
         hr: Number(form.heartRate),
@@ -46,184 +73,194 @@ export default function PatientsPage() {
       },
     };
 
-    await addPatient(newPatient);
-    setShowModal(false);
+    if (editingPatient) {
+      await updatePatient(patientData);
+    } else {
+      await addPatient(patientData);
+    }
 
-    setForm({
-      name: "",
-      age: "",
-      gender: "Male",
-      department: "ICU",
-      diagnosis: "",
-      heartRate: "",
-      oxygen: "",
-      bloodPressure: "",
-    });
+    setShowModal(false);
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("Are you sure you want to delete this patient?")) return;
+    await deletePatient(id);
   }
 
   return (
-    <div className="space-y-8">
+    <div className="p-6 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">Patient Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
 
         <button
-          onClick={() => setShowModal(true)}
-          className="px-6 py-2 text-white transition bg-blue-600 rounded-lg shadow-md hover:bg-blue-700"
+          onClick={openAddModal}
+          className="px-6 py-2 text-white transition bg-blue-600 rounded-lg shadow hover:bg-blue-700"
         >
           + Add Patient
         </button>
       </div>
 
+      {/* Patient Cards */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {patients.map((p) => (
+          <motion.div
+            key={p.id}
+            whileHover={{ y: -4 }}
+            className="p-6 transition bg-white border border-gray-200 shadow-sm rounded-2xl hover:shadow-lg"
+          >
+            <h2 className="text-xl font-semibold text-gray-900">{p.name}</h2>
+
+            <p className="mt-1 text-sm text-gray-500">{p.department}</p>
+
+            <p className="mt-3 text-sm text-gray-700">
+              <span className="font-medium">Diagnosis:</span> {p.diagnosis}
+            </p>
+
+            <p className="mt-2 text-sm">
+              <span className="font-medium text-gray-700">Risk:</span>{" "}
+              <span
+                className={`font-semibold ${
+                  p.risk === "Critical"
+                    ? "text-red-600"
+                    : p.risk === "High"
+                      ? "text-orange-600"
+                      : p.risk === "Medium"
+                        ? "text-yellow-600"
+                        : "text-green-600"
+                }`}
+              >
+                {p.risk}
+              </span>
+            </p>
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-6">
+              <button
+                onClick={() => openEditModal(p)}
+                className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => handleDelete(p.id)}
+                className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white w-[650px] p-8 rounded-2xl shadow-2xl border"
+            transition={{ duration: 0.25 }}
+            className="bg-white w-[680px] p-10 rounded-3xl shadow-2xl"
           >
-            <h2 className="mb-6 text-xl font-semibold text-gray-800">
-              Register New Patient
+            <h2 className="mb-8 text-2xl font-bold text-gray-900">
+              {editingPatient ? "Edit Patient" : "Register New Patient"}
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
                 <input
                   name="name"
-                  placeholder="Full Name"
                   value={form.name}
                   onChange={handleChange}
+                  placeholder="Full Name"
                   required
-                  className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
 
                 <input
                   name="age"
                   type="number"
-                  placeholder="Age"
                   value={form.age}
                   onChange={handleChange}
+                  placeholder="Age"
                   required
-                  className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              {/* Gender + Department */}
-              <div className="grid grid-cols-2 gap-4">
-                <select
-                  name="gender"
-                  value={form.gender}
-                  onChange={handleChange}
-                  className="p-3 bg-white border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-
-                <select
-                  name="department"
-                  value={form.department}
-                  onChange={handleChange}
-                  className="p-3 bg-white border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="ICU">ICU</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Neurology">Neurology</option>
-                  <option value="Emergency">Emergency</option>
-                </select>
-              </div>
-
-              {/* Diagnosis */}
               <input
                 name="diagnosis"
-                placeholder="Diagnosis"
                 value={form.diagnosis}
                 onChange={handleChange}
+                placeholder="Diagnosis"
                 required
-                className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
               />
 
-              {/* Condition / Risk */}
               <select
                 name="risk"
                 value={form.risk}
                 onChange={handleChange}
-                className="w-full p-3 bg-white border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Low">Low Condition</option>
-                <option value="Medium">Medium Condition</option>
-                <option value="High">High Risk</option>
-                <option value="Critical">Critical Condition</option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
               </select>
 
-              {/* Vitals */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-6">
                 <input
                   name="heartRate"
                   type="number"
-                  placeholder="Heart Rate (bpm)"
                   value={form.heartRate}
                   onChange={handleChange}
+                  placeholder="Heart Rate"
                   required
-                  className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
 
                 <input
                   name="oxygen"
                   type="number"
-                  placeholder="Oxygen (%)"
                   value={form.oxygen}
                   onChange={handleChange}
+                  placeholder="Oxygen (%)"
                   required
-                  className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
 
                 <input
                   name="bloodPressure"
-                  placeholder="Blood Pressure"
                   value={form.bloodPressure}
                   onChange={handleChange}
+                  placeholder="Blood Pressure"
                   required
-                  className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              {/* Buttons */}
-              <div className="flex justify-end gap-4 pt-4">
+              <div className="flex justify-end gap-4 pt-6">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2 text-gray-600 transition border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className="px-6 py-2 text-gray-600 transition border border-gray-300 rounded-xl hover:bg-gray-100"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="px-6 py-2 text-white transition bg-blue-600 rounded-lg shadow-md hover:bg-blue-700"
+                  className="px-8 py-2 text-white transition bg-blue-600 shadow-lg rounded-xl hover:bg-blue-700"
                 >
-                  Save Patient
+                  {editingPatient ? "Update Patient" : "Save Patient"}
                 </button>
               </div>
             </form>
           </motion.div>
         </div>
       )}
-
-      {/* Patient List */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {patients.map((p) => (
-          <div key={p.id} className="p-6 bg-white border shadow-md rounded-2xl">
-            <h2 className="text-lg font-semibold">{p.name}</h2>
-            <p className="text-sm text-gray-500">{p.department}</p>
-            <p className="mt-2 text-sm">Diagnosis: {p.diagnosis}</p>
-            <p className="text-sm">Risk: {p.risk}</p>
-            <p className="text-sm">Status: {p.status}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
