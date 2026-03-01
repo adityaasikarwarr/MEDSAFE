@@ -1,23 +1,29 @@
-export type Severity = "Low" | "Medium" | "High" | "Critical";
+export interface Vitals {
+  hr: number;
+  o2: number;
+  bp: string;
+}
 
-export type Patient = {
-  id: number;
+export interface Medication {
+  id: string;
   name: string;
-  age: number;
-  department: string;
+  dosage: string;
+  frequency: string;
+}
 
+export type RiskLevel =
+  | "LOW"
+  | "MODERATE"
+  | "HIGH"
+  | "CRITICAL";
+
+export interface Patient {
+  id: string;
+  name: string;
+  icuBed: string;
   diagnosis: string;
-  bedNumber: string;
-
-  heartRate: number;
-  oxygenLevel: number;
-  bloodPressure: string;
-
-  risk: Severity;
-  status: "Stable" | "Admitted" | "Critical";
-
-  admittedAt: string;
   assignedDoctor: string;
-
-  medications: string[];
-};
+  vitals: Vitals;
+  riskLevel: RiskLevel;
+  medications: Medication[];
+}
