@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePatients } from "@/context/PatientContext";
+import { useAuth } from "@/context/AuthContext";
 import { Patient } from "@/types/patient";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import RoleGuard from "@/components/dashboard/RoleGuard";
 
 export default function PatientsPage() {
   const { patients, addPatient, updatePatient, deletePatient } = usePatients();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
@@ -92,6 +94,7 @@ export default function PatientsPage() {
 
   return (
     <div className="p-8 space-y-8">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -103,14 +106,26 @@ export default function PatientsPage() {
           </p>
         </div>
 
-        <RoleGuard allow={["ADMIN"]}>
+        {user?.role === "ADMIN" ? (
           <button
             onClick={openAddModal}
             className="px-6 py-2 text-white transition bg-blue-600 rounded-lg shadow hover:bg-blue-700"
           >
             + Add Patient
           </button>
-        </RoleGuard>
+        ) : (
+          <div className="relative group">
+            <button
+              disabled
+              className="px-6 py-2 text-white bg-gray-400 rounded-lg cursor-not-allowed"
+            >
+              Request Patient Admission
+            </button>
+            <span className="absolute px-3 py-1 text-xs text-white transition -translate-x-1/2 bg-black rounded opacity-0 -top-8 left-1/2 group-hover:opacity-100">
+              Only Admin can add patients
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Patient Grid */}
@@ -123,7 +138,6 @@ export default function PatientsPage() {
             className="p-6 transition bg-white border border-gray-200 shadow-sm cursor-pointer rounded-2xl hover:shadow-lg"
             onClick={() => router.push(`/dashboard/patients/${p.id}`)}
           >
-            {/* Top Section */}
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -143,12 +157,10 @@ export default function PatientsPage() {
               </span>
             </div>
 
-            {/* Diagnosis */}
             <p className="mt-4 text-sm text-gray-700">
               <span className="font-medium">Diagnosis:</span> {p.diagnosis}
             </p>
 
-            {/* Risk */}
             <p className="mt-2 text-sm">
               <span className="font-medium text-gray-700">Risk:</span>{" "}
               <span
@@ -156,17 +168,16 @@ export default function PatientsPage() {
                   p.risk === "Critical"
                     ? "text-red-600"
                     : p.risk === "High"
-                      ? "text-orange-600"
-                      : p.risk === "Medium"
-                        ? "text-yellow-600"
-                        : "text-green-600"
+                    ? "text-orange-600"
+                    : p.risk === "Medium"
+                    ? "text-yellow-600"
+                    : "text-green-600"
                 }`}
               >
                 {p.risk}
               </span>
             </p>
 
-            {/* Vitals Preview */}
             <div className="grid grid-cols-3 gap-4 pt-4 mt-6 text-sm text-center border-t">
               <div>
                 <p className="text-xs text-gray-400">HR</p>
@@ -182,7 +193,6 @@ export default function PatientsPage() {
               </div>
             </div>
 
-            {/* Actions */}
             <div
               className="flex gap-3 pt-6"
               onClick={(e) => e.stopPropagation()}
@@ -209,7 +219,7 @@ export default function PatientsPage() {
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Modal (unchanged logic) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <motion.div
