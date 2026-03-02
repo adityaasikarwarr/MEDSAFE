@@ -3,7 +3,7 @@
 import { User } from "@/types/user";
 import { createContext, useContext, useState, useEffect } from "react";
 
-export type Role = "Admin" | "Doctor" | "Nurse" | "Analyst";
+export type Role = "ADMIN" | "Doctor" | "Nurse" | "Analyst";
 
 export type User = {
   name: string;
