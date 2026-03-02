@@ -4,9 +4,11 @@ import { useState } from "react";
 import { usePatients } from "@/context/PatientContext";
 import { Patient } from "@/types/patient";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function PatientsPage() {
   const { patients, addPatient, updatePatient, deletePatient } = usePatients();
+  const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -63,9 +65,9 @@ export default function PatientsPage() {
       gender: form.gender,
       department: form.department,
       diagnosis: form.diagnosis,
-      status: "Admitted",
+      status: editingPatient?.status || "Admitted",
       risk: form.risk,
-      medications: [],
+      medications: editingPatient?.medications || [],
       vitals: {
         hr: Number(form.heartRate),
         o2: Number(form.oxygen),
@@ -88,10 +90,18 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-8 space-y-8">
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Patient Management
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage admitted patients and monitor status
+          </p>
+        </div>
 
         <button
           onClick={openAddModal}
@@ -101,22 +111,43 @@ export default function PatientsPage() {
         </button>
       </div>
 
-      {/* Patient Cards */}
+      {/* Patient Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {patients.map((p) => (
           <motion.div
             key={p.id}
-            whileHover={{ y: -4 }}
-            className="p-6 transition bg-white border border-gray-200 shadow-sm rounded-2xl hover:shadow-lg"
+            whileHover={{ y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="p-6 transition bg-white border border-gray-200 shadow-sm cursor-pointer rounded-2xl hover:shadow-lg"
+            onClick={() => router.push(`/dashboard/patients/${p.id}`)}
           >
-            <h2 className="text-xl font-semibold text-gray-900">{p.name}</h2>
+            {/* Top Section */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {p.name}
+                </h2>
+                <p className="text-sm text-gray-500">{p.department}</p>
+              </div>
 
-            <p className="mt-1 text-sm text-gray-500">{p.department}</p>
+              <span
+                className={`px-3 py-1 text-xs rounded-full font-medium ${
+                  p.status === "Discharged"
+                    ? "bg-gray-100 text-gray-600"
+                    : "bg-green-100 text-green-600"
+                }`}
+              >
+                {p.status}
+              </span>
+            </div>
 
-            <p className="mt-3 text-sm text-gray-700">
-              <span className="font-medium">Diagnosis:</span> {p.diagnosis}
+            {/* Diagnosis */}
+            <p className="mt-4 text-sm text-gray-700">
+              <span className="font-medium">Diagnosis:</span>{" "}
+              {p.diagnosis}
             </p>
 
+            {/* Risk */}
             <p className="mt-2 text-sm">
               <span className="font-medium text-gray-700">Risk:</span>{" "}
               <span
@@ -124,18 +155,37 @@ export default function PatientsPage() {
                   p.risk === "Critical"
                     ? "text-red-600"
                     : p.risk === "High"
-                      ? "text-orange-600"
-                      : p.risk === "Medium"
-                        ? "text-yellow-600"
-                        : "text-green-600"
+                    ? "text-orange-600"
+                    : p.risk === "Medium"
+                    ? "text-yellow-600"
+                    : "text-green-600"
                 }`}
               >
                 {p.risk}
               </span>
             </p>
 
-            {/* Buttons */}
-            <div className="flex gap-3 pt-6">
+            {/* Vitals Preview */}
+            <div className="grid grid-cols-3 gap-4 pt-4 mt-6 text-sm text-center border-t">
+              <div>
+                <p className="text-xs text-gray-400">HR</p>
+                <p className="font-semibold">{p.vitals?.hr}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">O2</p>
+                <p className="font-semibold">{p.vitals?.o2}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">BP</p>
+                <p className="font-semibold">{p.vitals?.bp}</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div
+              className="flex gap-3 pt-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 onClick={() => openEditModal(p)}
                 className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
@@ -154,7 +204,7 @@ export default function PatientsPage() {
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Modal (unchanged structure, same as before) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <motion.div
@@ -168,6 +218,7 @@ export default function PatientsPage() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+
               <div className="grid grid-cols-2 gap-6">
                 <input
                   name="name"
@@ -175,9 +226,8 @@ export default function PatientsPage() {
                   onChange={handleChange}
                   placeholder="Full Name"
                   required
-                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
-
                 <input
                   name="age"
                   type="number"
@@ -185,7 +235,7 @@ export default function PatientsPage() {
                   onChange={handleChange}
                   placeholder="Age"
                   required
-                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -195,14 +245,14 @@ export default function PatientsPage() {
                 onChange={handleChange}
                 placeholder="Diagnosis"
                 required
-                className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
               />
 
               <select
                 name="risk"
                 value={form.risk}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
               >
                 <option>Low</option>
                 <option>Medium</option>
@@ -218,9 +268,8 @@ export default function PatientsPage() {
                   onChange={handleChange}
                   placeholder="Heart Rate"
                   required
-                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
-
                 <input
                   name="oxygen"
                   type="number"
@@ -228,16 +277,15 @@ export default function PatientsPage() {
                   onChange={handleChange}
                   placeholder="Oxygen (%)"
                   required
-                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
-
                 <input
                   name="bloodPressure"
                   value={form.bloodPressure}
                   onChange={handleChange}
                   placeholder="Blood Pressure"
                   required
-                  className="px-4 py-3 border border-gray-300 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-3 border border-gray-300 bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -245,22 +293,24 @@ export default function PatientsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 text-gray-600 transition border border-gray-300 rounded-xl hover:bg-gray-100"
+                  className="px-6 py-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-100"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="px-8 py-2 text-white transition bg-blue-600 shadow-lg rounded-xl hover:bg-blue-700"
+                  className="px-8 py-2 text-white bg-blue-600 shadow-lg rounded-xl hover:bg-blue-700"
                 >
                   {editingPatient ? "Update Patient" : "Save Patient"}
                 </button>
               </div>
+
             </form>
           </motion.div>
         </div>
       )}
+
     </div>
   );
 }
