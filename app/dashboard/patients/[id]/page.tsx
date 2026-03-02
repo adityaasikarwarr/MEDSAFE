@@ -5,18 +5,47 @@ import { usePatients } from "@/context/PatientContext";
 import { useEffect, useState } from "react";
 import { Patient } from "@/types/patient";
 import { motion } from "framer-motion";
+import { activityService } from "@/services/activityService";
 
 export default function PatientDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { patients, updatePatient, alerts } = usePatients();
+  const { patients, alerts, updatePatient } = usePatients();
 
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [history, setHistory] = useState<number[]>([]);
 
   useEffect(() => {
     const found = patients.find((p) => String(p.id) === String(id));
     if (found) setPatient(found);
   }, [patients, id]);
+
+  useEffect(() => {
+    if (!patient) return;
+
+    const loadActivities = async () => {
+      const logs = await activityService.getAll();
+      const related = logs.filter((log: any) =>
+        log.description?.includes(patient.name),
+      );
+      setActivities(related.reverse());
+    };
+
+    loadActivities();
+  }, [patient]);
+
+  // Simulated vitals history
+  useEffect(() => {
+    if (!patient) return;
+
+    const simulated = Array.from(
+      { length: 10 },
+      () => Math.floor(Math.random() * 20) + patient.vitals.hr - 10,
+    );
+
+    setHistory(simulated);
+  }, [patient]);
 
   if (!patient) {
     return <div className="p-8 text-gray-500">Patient not found.</div>;
@@ -25,15 +54,12 @@ export default function PatientDetailPage() {
   const relatedAlerts = alerts.filter((a) => a.message.includes(patient.name));
 
   async function dischargePatient() {
-    await updatePatient({
-      ...patient,
-      status: "Discharged",
-    });
+    await updatePatient({ ...patient, status: "Discharged" });
     router.push("/dashboard/patients");
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -41,37 +67,67 @@ export default function PatientDetailPage() {
           <p className="text-gray-500">{patient.department}</p>
         </div>
 
-        <span
-          className={`px-4 py-2 rounded-full text-sm font-semibold ${
-            patient.risk === "Critical"
-              ? "bg-red-100 text-red-600"
-              : patient.risk === "High"
-                ? "bg-orange-100 text-orange-600"
-                : patient.risk === "Medium"
-                  ? "bg-yellow-100 text-yellow-600"
-                  : "bg-green-100 text-green-600"
-          }`}
-        >
-          {patient.risk}
-        </span>
+        <div className="flex gap-3">
+          <span
+            className={`px-4 py-2 rounded-full text-sm font-semibold ${
+              patient.risk === "Critical"
+                ? "bg-red-100 text-red-600"
+                : patient.risk === "High"
+                  ? "bg-orange-100 text-orange-600"
+                  : patient.risk === "Medium"
+                    ? "bg-yellow-100 text-yellow-600"
+                    : "bg-green-100 text-green-600"
+            }`}
+          >
+            {patient.risk}
+          </span>
+
+          <span
+            className={`px-4 py-2 rounded-full text-sm font-semibold ${
+              patient.status === "Discharged"
+                ? "bg-gray-100 text-gray-600"
+                : "bg-blue-100 text-blue-600"
+            }`}
+          >
+            {patient.status}
+          </span>
+        </div>
       </div>
 
-      {/* Profile Info */}
+      {/* Profile Section */}
       <div className="grid grid-cols-3 gap-6 p-6 bg-white border shadow rounded-2xl">
         <Info label="Age" value={patient.age} />
         <Info label="Gender" value={patient.gender} />
-        <Info label="Status" value={patient.status} />
         <Info label="Diagnosis" value={patient.diagnosis} />
       </div>
 
       {/* Current Vitals */}
-      <div className="p-6 space-y-4 bg-white border shadow rounded-2xl">
+      <div className="p-6 space-y-6 bg-white border shadow rounded-2xl">
         <h2 className="text-lg font-semibold text-gray-800">Current Vitals</h2>
 
         <div className="grid grid-cols-3 gap-6">
-          <Vital label="Heart Rate" value={`${patient.vitals.hr} bpm`} />
-          <Vital label="Oxygen" value={`${patient.vitals.o2}%`} />
-          <Vital label="Blood Pressure" value={patient.vitals.bp} />
+          <VitalCard label="Heart Rate" value={`${patient.vitals.hr} bpm`} />
+          <VitalCard label="Oxygen" value={`${patient.vitals.o2}%`} />
+          <VitalCard label="Blood Pressure" value={patient.vitals.bp} />
+        </div>
+      </div>
+
+      {/* Vitals History */}
+      <div className="p-6 bg-white border shadow rounded-2xl">
+        <h2 className="mb-4 text-lg font-semibold text-gray-800">
+          Heart Rate Trend
+        </h2>
+
+        <div className="flex items-end h-32 gap-2">
+          {history.map((val, index) => (
+            <motion.div
+              key={index}
+              initial={{ height: 0 }}
+              animate={{ height: `${val}px` }}
+              transition={{ duration: 0.4 }}
+              className="flex-1 bg-blue-500 rounded"
+            />
+          ))}
         </div>
       </div>
 
@@ -88,6 +144,26 @@ export default function PatientDetailPage() {
             <p className="text-sm font-medium text-gray-800">{alert.message}</p>
             <p className="text-xs text-gray-500">
               {new Date(alert.timestamp).toLocaleString()}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="p-6 space-y-4 bg-white border shadow rounded-2xl">
+        <h2 className="text-lg font-semibold text-gray-800">
+          Activity History
+        </h2>
+
+        {activities.length === 0 && (
+          <p className="text-sm text-gray-500">No recorded activity.</p>
+        )}
+
+        {activities.map((act) => (
+          <div key={act.id} className="text-sm">
+            <p className="font-medium text-gray-800">{act.description}</p>
+            <p className="text-xs text-gray-500">
+              {new Date(act.timestamp).toLocaleString()}
             </p>
           </div>
         ))}
@@ -115,7 +191,7 @@ function Info({ label, value }: { label: string; value: any }) {
   );
 }
 
-function Vital({ label, value }: { label: string; value: string }) {
+function VitalCard({ label, value }: { label: string; value: string }) {
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
