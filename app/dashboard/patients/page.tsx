@@ -1,10 +1,11 @@
 "use client";
-import RoleGuard from "@/components/dashboard/RoleGuard";
+
 import { useState } from "react";
 import { usePatients } from "@/context/PatientContext";
 import { Patient } from "@/types/patient";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import RoleGuard from "@/components/dashboard/RoleGuard";
 
 export default function PatientsPage() {
   const { patients, addPatient, updatePatient, deletePatient } = usePatients();
@@ -91,7 +92,6 @@ export default function PatientsPage() {
 
   return (
     <div className="p-8 space-y-8">
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -103,12 +103,14 @@ export default function PatientsPage() {
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="px-6 py-2 text-white transition bg-blue-600 rounded-lg shadow hover:bg-blue-700"
-        >
-          + Add Patient
-        </button>
+        <RoleGuard allow={["ADMIN"]}>
+          <button
+            onClick={openAddModal}
+            className="px-6 py-2 text-white transition bg-blue-600 rounded-lg shadow hover:bg-blue-700"
+          >
+            + Add Patient
+          </button>
+        </RoleGuard>
       </div>
 
       {/* Patient Grid */}
@@ -143,8 +145,7 @@ export default function PatientsPage() {
 
             {/* Diagnosis */}
             <p className="mt-4 text-sm text-gray-700">
-              <span className="font-medium">Diagnosis:</span>{" "}
-              {p.diagnosis}
+              <span className="font-medium">Diagnosis:</span> {p.diagnosis}
             </p>
 
             {/* Risk */}
@@ -155,10 +156,10 @@ export default function PatientsPage() {
                   p.risk === "Critical"
                     ? "text-red-600"
                     : p.risk === "High"
-                    ? "text-orange-600"
-                    : p.risk === "Medium"
-                    ? "text-yellow-600"
-                    : "text-green-600"
+                      ? "text-orange-600"
+                      : p.risk === "Medium"
+                        ? "text-yellow-600"
+                        : "text-green-600"
                 }`}
               >
                 {p.risk}
@@ -186,25 +187,29 @@ export default function PatientsPage() {
               className="flex gap-3 pt-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => openEditModal(p)}
-                className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
-              >
-                Edit
-              </button>
+              <RoleGuard allow={["ADMIN", "DOCTOR"]}>
+                <button
+                  onClick={() => openEditModal(p)}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+                >
+                  Edit
+                </button>
+              </RoleGuard>
 
-              <button
-                onClick={() => handleDelete(p.id)}
-                className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Delete
-              </button>
+              <RoleGuard allow={["ADMIN"]}>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </RoleGuard>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Modal (unchanged structure, same as before) */}
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <motion.div
@@ -218,7 +223,6 @@ export default function PatientsPage() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-
               <div className="grid grid-cols-2 gap-6">
                 <input
                   name="name"
@@ -305,12 +309,10 @@ export default function PatientsPage() {
                   {editingPatient ? "Update Patient" : "Save Patient"}
                 </button>
               </div>
-
             </form>
           </motion.div>
         </div>
       )}
-
     </div>
   );
 }
