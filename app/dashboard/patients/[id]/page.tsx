@@ -1,5 +1,5 @@
 "use client";
-
+import RoleGuard from "@/components/dashboard/RoleGuard";
 import { useParams, useRouter } from "next/navigation";
 import { usePatients } from "@/context/PatientContext";
 import { useEffect, useState } from "react";
@@ -171,12 +171,16 @@ export default function PatientDetailPage() {
 
       {/* Discharge */}
       {patient.status !== "Discharged" && (
-        <button
-          onClick={dischargePatient}
-          className="px-6 py-2 text-white transition bg-red-600 rounded-lg hover:bg-red-700"
-        >
-          Discharge Patient
-        </button>
+        <RoleGuard allow={["ADMIN", "DOCTOR"]}>
+          {patient.status !== "Discharged" && (
+            <button
+              onClick={dischargePatient}
+              className="px-6 py-2 text-white transition bg-red-600 rounded-lg hover:bg-red-700"
+            >
+              Discharge Patient
+            </button>
+          )}
+        </RoleGuard>
       )}
     </div>
   );

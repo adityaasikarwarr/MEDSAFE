@@ -1,24 +1,17 @@
 "use client";
 
 import { ReactNode } from "react";
-
-/*
-  TEMP VERSION:
-  We assume current user role is stored in localStorage.
-  Later you will connect this to authService or context.
-*/
+import { useAuth } from "@/context/AuthContext";
 
 interface Props {
-  allow: string[];
+  allow: ("ADMIN" | "DOCTOR" | "NURSE")[];
   children: ReactNode;
 }
 
 export default function RoleGuard({ allow, children }: Props) {
-  // Temporary role fetch
-  const role =
-    typeof window !== "undefined" ? localStorage.getItem("role") : null;
+  const { user } = useAuth();
 
-  if (!role || !allow.includes(role)) {
+  if (!user || !allow.includes(user.role)) {
     return null;
   }
 

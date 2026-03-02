@@ -1,5 +1,5 @@
 "use client";
-
+import RoleGuard from "@/components/dashboard/RoleGuard";
 import { useState } from "react";
 import { usePatients } from "@/context/PatientContext";
 import { Patient } from "@/types/patient";
