@@ -1,27 +1,26 @@
 "use client";
 
-import { User } from "@/types/user";
 import { createContext, useContext, useState, useEffect } from "react";
 
-export type Role = "ADMIN" | "Doctor" | "Nurse" | "Analyst";
+export type Role = "ADMIN" | "DOCTOR" | "NURSE" | "ANALYST";
 
-export type User = {
+export type AppUser = {
   name: string;
   email: string;
   role: Role;
 };
 
 type AuthContextType = {
-  user: User | null;
+  user: AppUser | null;
   isLoading: boolean;
-  login: (userData: User) => void;
+  login: (userData: AppUser) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: AppUser) => {
     setUser(userData);
     localStorage.setItem("authUser", JSON.stringify(userData));
   };
