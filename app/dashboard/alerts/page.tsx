@@ -1,5 +1,6 @@
 "use client";
 
+import RoleGuard from "@/components/dashboard/RoleGuard";
 import { usePatients } from "@/context/PatientContext";
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
@@ -29,7 +30,7 @@ export default function AlertsPage() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <StatCard
           icon={<AlertTriangle size={18} />}
           title="Active Alerts"
@@ -72,7 +73,7 @@ export default function AlertsPage() {
       {/* Alert List */}
       <div className="space-y-4">
         {filteredAlerts.length === 0 && (
-          <div className="bg-white p-12 rounded-2xl shadow text-center text-gray-500">
+          <div className="p-12 text-center text-gray-500 bg-white shadow rounded-2xl">
             No alerts available.
           </div>
         )}
@@ -94,7 +95,7 @@ export default function AlertsPage() {
               <p className="font-semibold text-gray-800">{alert.message}</p>
 
               <div className="flex items-center gap-3 text-sm text-gray-500">
-                <span className="px-2 py-1 rounded-full bg-gray-100">
+                <span className="px-2 py-1 bg-gray-100 rounded-full">
                   {alert.severity}
                 </span>
                 <span>{new Date(alert.timestamp).toLocaleString()}</span>
@@ -102,14 +103,16 @@ export default function AlertsPage() {
             </div>
 
             {!alert.resolved ? (
-              <button
-                onClick={() => resolveAlert(alert.id)}
-                className="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-              >
-                Resolve
-              </button>
+              <RoleGuard allow={["ADMIN", "DOCTOR"]}>
+                <button
+                  onClick={() => resolveAlert(alert.id)}
+                  className="px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700"
+                >
+                  Resolve
+                </button>
+              </RoleGuard>
             ) : (
-              <span className="flex items-center gap-2 text-green-600 text-sm">
+              <span className="flex items-center gap-2 text-sm text-green-600">
                 <CheckCircle size={16} /> Resolved
               </span>
             )}
