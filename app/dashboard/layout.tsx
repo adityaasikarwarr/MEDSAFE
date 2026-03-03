@@ -35,17 +35,8 @@ export default function DashboardLayout({
   const [showNotifications, setShowNotifications] = useState(false);
 
   const activeAlerts = alerts?.filter((a) => !a.resolved) || [];
-
   const userPermissions = user ? getPermissions(user.role) : null;
 
-  /* 🔐 Route Protection */
-  // useEffect(() => {
-  //   if (!user) {
-  //     router.replace("/");
-  //   }
-  // }, [user, router]);
-
-  /* Close Notification Dropdown */
   useEffect(() => {
     function handleClickOutside(event: any) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -59,33 +50,35 @@ export default function DashboardLayout({
   if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-[#F4F7FB] overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
       {/* ================= SIDEBAR ================= */}
       <motion.aside
         initial={false}
-        animate={{ width: collapsed ? 80 : 260 }}
+        animate={{ width: collapsed ? 90 : 270 }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
-        className="bg-[#0F172A] text-white flex flex-col justify-between"
+        className="flex flex-col justify-between text-white border-r shadow-2xl bg-slate-900/95 backdrop-blur-xl border-white/5"
       >
-        {/* Top Section */}
+        {/* Header */}
         <div>
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <div className="flex items-center justify-between p-5 border-b border-white/10">
             {!collapsed && (
-              <Link href="/" className="block">
-                <h1 className="text-lg font-semibold">MedSafe AI</h1>
-                <p className="text-xs text-gray-400">Clinical Platform</p>
-              </Link>
+              <div>
+                <h1 className="text-lg font-semibold tracking-wide">
+                  MedSafe AI
+                </h1>
+                <p className="text-xs text-slate-400">Clinical Platform</p>
+              </div>
             )}
 
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-2 rounded-lg hover:bg-white/10"
+              className="p-2 transition rounded-lg hover:bg-white/10"
             >
               <Menu size={18} />
             </button>
           </div>
 
-          <nav className="p-3 space-y-2">
+          <nav className="p-4 space-y-2">
             <SidebarItem
               href="/"
               icon={<Home size={18} />}
@@ -93,7 +86,6 @@ export default function DashboardLayout({
               active={pathname === "/"}
               collapsed={collapsed}
             />
-
             <SidebarItem
               href="/dashboard"
               icon={<LayoutDashboard size={18} />}
@@ -101,7 +93,6 @@ export default function DashboardLayout({
               active={pathname === "/dashboard"}
               collapsed={collapsed}
             />
-
             <SidebarItem
               href="/dashboard/patients"
               icon={<Users size={18} />}
@@ -109,15 +100,13 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/patients")}
               collapsed={collapsed}
             />
-
             <SidebarItem
               href="/dashboard/medication"
               icon={<Pill size={18} />}
-              label="Medication Safety"
+              label="Medication"
               active={pathname.startsWith("/dashboard/medication")}
               collapsed={collapsed}
             />
-
             <SidebarItem
               href="/dashboard/alerts"
               icon={<Bell size={18} />}
@@ -130,7 +119,6 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/alerts")}
               collapsed={collapsed}
             />
-
             <SidebarItem
               href="/dashboard/icu"
               icon={<Activity size={18} />}
@@ -138,7 +126,6 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/icu")}
               collapsed={collapsed}
             />
-
             <SidebarItem
               href="/dashboard/analytics"
               icon={<BarChart3 size={18} />}
@@ -147,7 +134,6 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {/* 🔐 Role Based Visibility */}
             {userPermissions?.canAccessSettings && (
               <SidebarItem
                 href="/dashboard/settings"
@@ -160,12 +146,12 @@ export default function DashboardLayout({
           </nav>
         </div>
 
-        {/* Bottom Section */}
-        <div className="p-4 border-t border-white/10">
+        {/* User Section */}
+        <div className="p-5 border-t border-white/10">
           {!collapsed && (
             <>
-              <p className="font-semibold text-gray-200">{user.name}</p>
-              <p className="mb-4 text-sm text-gray-400">{user.role}</p>
+              <p className="font-medium text-slate-200">{user.name}</p>
+              <p className="mb-4 text-sm text-slate-400">{user.role}</p>
             </>
           )}
 
@@ -176,7 +162,7 @@ export default function DashboardLayout({
               logout();
               router.replace("/");
             }}
-            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+            className="flex items-center gap-2 text-sm transition text-slate-300 hover:text-white"
           >
             <LogOut size={16} />
             {!collapsed && "Logout"}
@@ -184,18 +170,18 @@ export default function DashboardLayout({
         </div>
       </motion.aside>
 
-      {/* ================= MAIN CONTENT ================= */}
-      <main className="relative flex-1 p-8 overflow-y-auto">
+      {/* ================= MAIN ================= */}
+      <main className="relative flex-1 p-10 overflow-y-auto">
         {/* Notifications */}
-        <div className="fixed z-50 top-6 right-8" ref={dropdownRef}>
+        <div className="fixed z-50 top-6 right-10" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-3 bg-white shadow rounded-2xl hover:shadow-md"
+            className="relative p-3 transition bg-white shadow-lg rounded-2xl hover:shadow-xl"
           >
-            <Bell size={20} className="text-gray-700" />
+            <Bell size={20} className="text-slate-700" />
 
             {activeAlerts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full">
                 {activeAlerts.length}
               </span>
             )}
@@ -204,13 +190,16 @@ export default function DashboardLayout({
           <AnimatePresence>
             {showNotifications && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mt-4 overflow-hidden bg-white border shadow-xl w-96 rounded-2xl"
+                initial={{ opacity: 0, y: -12, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="mt-4 overflow-hidden bg-white border shadow-2xl border-slate-100 w-96 rounded-3xl"
               >
-                <div className="p-4 border-b bg-gray-50">
-                  <h3 className="font-semibold text-gray-800">Active Alerts</h3>
+                <div className="p-5 border-b bg-slate-50">
+                  <h3 className="font-semibold text-slate-800">
+                    Active Alerts
+                  </h3>
                 </div>
 
                 <div className="overflow-y-auto max-h-72">
@@ -218,18 +207,18 @@ export default function DashboardLayout({
                     activeAlerts.map((alert) => (
                       <div
                         key={alert.id}
-                        className="px-4 py-3 border-b hover:bg-gray-50"
+                        className="px-5 py-4 transition border-b hover:bg-slate-50"
                       >
-                        <p className="text-sm font-medium text-gray-800">
+                        <p className="text-sm font-medium text-slate-800">
                           {alert.message}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-slate-400">
                           {alert.severity}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <div className="p-6 text-sm text-center text-gray-500">
+                    <div className="p-6 text-sm text-center text-slate-500">
                       No active alerts
                     </div>
                   )}
@@ -262,15 +251,22 @@ function SidebarItem({
   collapsed?: boolean;
 }) {
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="relative block">
       <motion.div
-        whileHover={{ scale: 1.03 }}
+        whileHover={{ x: 4 }}
         className={`flex items-center ${
           collapsed ? "justify-center" : "justify-between"
-        } px-4 py-3 rounded-xl cursor-pointer ${
-          active ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-white/10"
+        } px-4 py-3 rounded-xl transition-all duration-200 ${
+          active
+            ? "bg-white/10 text-white"
+            : "text-slate-400 hover:bg-white/5 hover:text-white"
         }`}
       >
+        {/* Active Accent */}
+        {active && (
+          <span className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full" />
+        )}
+
         <div className="flex items-center gap-3">
           {icon}
           {!collapsed && <span className="text-sm font-medium">{label}</span>}
