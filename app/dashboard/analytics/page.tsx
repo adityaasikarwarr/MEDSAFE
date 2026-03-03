@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
             ),
         );
 
-  /* ================= DATA ================= */
+  /* ================= DATASETS ================= */
 
   const riskTrendData = [
     { level: "Critical", value: criticalPatients },
@@ -59,6 +59,13 @@ export default function AnalyticsPage() {
     { level: "Medium", value: mediumPatients },
     { level: "Low", value: lowPatients },
   ];
+
+  const alertSeverityData = ["Critical", "High", "Medium", "Low"].map(
+    (level) => ({
+      name: level,
+      value: activeAlerts.filter((a) => a.severity === level).length,
+    }),
+  );
 
   const departmentData = Object.values(
     patients.reduce((acc: any, patient) => {
@@ -84,13 +91,14 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-14">
+
       {/* HEADER */}
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
           Hospital Intelligence Analytics
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Operational performance & clinical distribution insights
+          Operational performance & clinical insights
         </p>
       </div>
 
@@ -104,7 +112,8 @@ export default function AnalyticsPage() {
 
       {/* CHART GRID */}
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Risk Line */}
+
+        {/* Risk Distribution */}
         <ChartCard title="Risk Distribution">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={riskTrendData}>
@@ -118,7 +127,6 @@ export default function AnalyticsPage() {
                 stroke="#2563eb"
                 strokeWidth={3}
                 dot={{ r: 5 }}
-                activeDot={{ r: 7 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -143,49 +151,7 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* ALERT SEVERITY MODERN LINE */}
-        <ChartCard title="Alert Severity Distribution">
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={alertSeverityData}>
-              <defs>
-                <linearGradient
-                  id="severityGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.3} />
-                </linearGradient>
-              </defs>
-
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
-              <YAxis stroke="#94a3b8" fontSize={12} />
-
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "none",
-                }}
-              />
-
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="url(#severityGradient)"
-                strokeWidth={3}
-                dot={{ r: 5 }}
-                activeDot={{ r: 7 }}
-                animationDuration={900}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* 🔥 UPGRADED DEPARTMENT LOAD */}
+        {/* Department Load (Upgraded) */}
         <ChartCard title="Department Load">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={departmentData} barSize={40}>
@@ -199,15 +165,11 @@ export default function AnalyticsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
 
               <XAxis dataKey="department" stroke="#94a3b8" fontSize={12} />
-
               <YAxis stroke="#94a3b8" fontSize={12} />
 
               <Tooltip
                 cursor={{ fill: "rgba(99,102,241,0.08)" }}
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "none",
-                }}
+                contentStyle={{ borderRadius: "12px", border: "none" }}
               />
 
               <Bar
@@ -219,12 +181,32 @@ export default function AnalyticsPage() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
+
+        {/* Alert Severity */}
+        <ChartCard title="Alert Severity Distribution">
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={alertSeverityData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
+              <YAxis stroke="#94a3b8" fontSize={12} />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#14b8a6"
+                strokeWidth={3}
+                dot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
       </div>
     </div>
   );
 }
 
-/* ================= KPI ================= */
+/* ================= KPI CARD ================= */
 function KPI({ label, value }: { label: string; value: any }) {
   return (
     <motion.div
@@ -233,13 +215,17 @@ function KPI({ label, value }: { label: string; value: any }) {
       transition={{ duration: 0.4 }}
       className="p-6 transition bg-white border shadow-sm rounded-2xl border-slate-100 hover:shadow-lg"
     >
-      <p className="text-xs tracking-wide uppercase text-slate-500">{label}</p>
-      <h2 className="mt-3 text-3xl font-semibold text-slate-900">{value}</h2>
+      <p className="text-xs tracking-wide uppercase text-slate-500">
+        {label}
+      </p>
+      <h2 className="mt-3 text-3xl font-semibold text-slate-900">
+        {value}
+      </h2>
     </motion.div>
   );
 }
 
-/* ================= CARD ================= */
+/* ================= CHART CARD ================= */
 function ChartCard({
   title,
   children,
