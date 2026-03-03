@@ -1,4 +1,7 @@
 "use client";
+
+import { VitalsEntry } from "@/services/vitalsHistoryService";
+import { vitalsHistoryService } from "@/services/vitalsHistoryService";
 import RoleGuard from "@/components/dashboard/RoleGuard";
 import { useParams, useRouter } from "next/navigation";
 import { usePatients } from "@/context/PatientContext";
@@ -14,7 +17,7 @@ export default function PatientDetailPage() {
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
-  const [history, setHistory] = useState<number[]>([]);
+  const [history, setHistory] = useState<VitalsEntry[]>([]);
 
   useEffect(() => {
     const found = patients.find((p) => String(p.id) === String(id));
@@ -39,12 +42,12 @@ export default function PatientDetailPage() {
   useEffect(() => {
     if (!patient) return;
 
-    const simulated = Array.from(
-      { length: 10 },
-      () => Math.floor(Math.random() * 20) + patient.vitals.hr - 10,
-    );
+    const loadHistory = async () => {
+      const historyData = await vitalsHistoryService.getByPatient(patient.id);
+      setHistory(historyData.slice(-10)); // last 10 entries
+    };
 
-    setHistory(simulated);
+    loadHistory();
   }, [patient]);
 
   if (!patient) {
@@ -119,11 +122,11 @@ export default function PatientDetailPage() {
         </h2>
 
         <div className="flex items-end h-32 gap-2">
-          {history.map((val, index) => (
+          {history.map((entry, index) => (
             <motion.div
               key={index}
               initial={{ height: 0 }}
-              animate={{ height: `${val}px` }}
+              animate={{ height: `${entry.hr}px` }}
               transition={{ duration: 0.4 }}
               className="flex-1 bg-blue-500 rounded"
             />
