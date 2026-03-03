@@ -14,14 +14,14 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("Doctor");
+  const [role, setRole] = useState<Role>("DOCTOR");
 
   const handleLogin = () => {
     if (!email || !password) return;
 
     login({
-      name: name || "Medical User",
-      role,
+      name,
+      role: role.toUpperCase() as Role,
       email,
     });
 
@@ -107,9 +107,9 @@ export default function LoginPage() {
                 onChange={(e) => setRole(e.target.value as Role)}
                 className="w-full px-4 py-3 mt-2 text-gray-800 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="Admin">Admin</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Nurse">Nurse</option>
+                <option value="ADMIN">Admin</option>
+                <option value="DOCTOR">Doctor</option>
+                <option value="NURSE">Nurse</option>
               </select>
             </div>
 
