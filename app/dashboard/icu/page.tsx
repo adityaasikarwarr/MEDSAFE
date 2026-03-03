@@ -30,6 +30,7 @@ export default function ICUPage() {
         else if (heartRate > 85) newRisk = "Medium";
 
         updatePatient({ ...p, risk: newRisk as any });
+
         await vitalsHistoryService.add({
           patientId: p.id,
           hr: heartRate,
@@ -54,12 +55,12 @@ export default function ICUPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">ICU Monitor</h1>
-        <p className="text-gray-500">Real-time patient monitoring dashboard</p>
+        <h1 className="text-3xl font-semibold text-slate-900">ICU Monitor</h1>
+        <p className="text-slate-500">Real-time patient monitoring dashboard</p>
       </div>
 
       {patients.length === 0 && (
-        <div className="p-12 text-center text-gray-500 bg-white shadow rounded-2xl">
+        <div className="p-12 text-center bg-white shadow text-slate-500 rounded-2xl">
           No patients currently under ICU monitoring.
         </div>
       )}
@@ -75,22 +76,30 @@ export default function ICUPage() {
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
-              className="p-6 space-y-5 bg-white border border-gray-100 shadow-lg rounded-2xl"
+              className={`p-6 space-y-5 bg-white border shadow-lg rounded-2xl transition ${
+                patient.risk === "Critical"
+                  ? "border-red-400"
+                  : patient.risk === "High"
+                    ? "border-orange-400"
+                    : patient.risk === "Medium"
+                      ? "border-yellow-400"
+                      : "border-green-400"
+              }`}
             >
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
                     <User size={16} /> {patient.name}
                   </h2>
-                  <p className="text-sm text-gray-500">{patient.department}</p>
+                  <p className="text-sm text-slate-500">{patient.department}</p>
                 </div>
 
                 <RiskBadge risk={patient.risk} />
               </div>
 
               {/* Patient Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+              <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                 <Info label="Age" value={patient.age} />
                 <Info label="Status" value={patient.status} />
                 <Info
@@ -112,7 +121,7 @@ export default function ICUPage() {
                     value={data.heartRate}
                     unit="bpm"
                     max={150}
-                    color="bg-red-500"
+                    risk={patient.risk}
                   />
 
                   <VitalBar
@@ -121,10 +130,10 @@ export default function ICUPage() {
                     value={data.oxygen}
                     unit="%"
                     max={100}
-                    color="bg-blue-500"
+                    risk={patient.risk}
                   />
 
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-400">
                     Updated at {data.updatedAt}
                   </p>
                 </div>
@@ -142,15 +151,15 @@ export default function ICUPage() {
 function RiskBadge({ risk }: { risk: string }) {
   const styles =
     risk === "Critical"
-      ? "bg-red-100 text-red-600"
+      ? "bg-red-100 text-red-700 border border-red-200"
       : risk === "High"
-        ? "bg-orange-100 text-orange-600"
+        ? "bg-orange-100 text-orange-700 border border-orange-200"
         : risk === "Medium"
-          ? "bg-yellow-100 text-yellow-600"
-          : "bg-green-100 text-green-600";
+          ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
+          : "bg-green-100 text-green-700 border border-green-200";
 
   return (
-    <span className={`px-3 py-1 text-xs rounded-full font-medium ${styles}`}>
+    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${styles}`}>
       {risk}
     </span>
   );
@@ -159,8 +168,8 @@ function RiskBadge({ risk }: { risk: string }) {
 function Info({ label, value }: { label: string; value: any }) {
   return (
     <div>
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className="font-medium text-gray-700">{value}</p>
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="font-medium text-slate-700">{value}</p>
     </div>
   );
 }
@@ -171,31 +180,44 @@ function VitalBar({
   value,
   unit,
   max,
-  color,
+  risk,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   unit: string;
   max: number;
-  color: string;
+  risk: string;
 }) {
   const percentage = (value / max) * 100;
 
+  const barColor =
+    risk === "Critical"
+      ? "bg-red-500"
+      : risk === "High"
+        ? "bg-orange-500"
+        : risk === "Medium"
+          ? "bg-yellow-500"
+          : "bg-green-500";
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-1 text-sm text-gray-600">
+      <div className="flex items-center justify-between mb-1 text-sm text-slate-600">
         <span className="flex items-center gap-2">
           {icon} {label}
         </span>
-        <span>
+
+        <span className="flex items-center gap-1 font-medium">
           {value} {unit}
+          {value > max * 0.8 && (
+            <span className="text-xs font-bold text-red-500">↑</span>
+          )}
         </span>
       </div>
 
       <div className="w-full h-2 bg-gray-200 rounded-full">
         <motion.div
-          className={`h-2 rounded-full ${color}`}
+          className={`h-2 rounded-full ${barColor}`}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.6 }}
