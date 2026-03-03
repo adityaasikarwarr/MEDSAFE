@@ -50,12 +50,13 @@ export default function DashboardLayout({
   if (!user) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex h-screen bg-[radial-gradient(circle_at_20%_20%,#f8fafc,#eef2f7)] overflow-hidden">
+
       {/* ================= SIDEBAR ================= */}
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 90 : 270 }}
-        transition={{ type: "spring", stiffness: 260, damping: 25 }}
+        transition={{ type: "spring", stiffness: 220, damping: 30 }}
         className="flex flex-col justify-between text-white border-r shadow-2xl bg-slate-900/95 backdrop-blur-xl border-white/5"
       >
         {/* Header */}
@@ -63,10 +64,12 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between p-5 border-b border-white/10">
             {!collapsed && (
               <div>
-                <h1 className="text-lg font-semibold tracking-wide">
+                <h1 className="text-xl font-semibold tracking-tight">
                   MedSafe AI
                 </h1>
-                <p className="text-xs text-slate-400">Clinical Platform</p>
+                <p className="text-xs text-slate-400">
+                  Clinical Platform
+                </p>
               </div>
             )}
 
@@ -171,7 +174,8 @@ export default function DashboardLayout({
       </motion.aside>
 
       {/* ================= MAIN ================= */}
-      <main className="relative flex-1 p-10 overflow-y-auto">
+      <main className="relative flex-1 overflow-y-auto">
+
         {/* Notifications */}
         <div className="fixed z-50 top-6 right-10" ref={dropdownRef}>
           <button
@@ -193,7 +197,7 @@ export default function DashboardLayout({
                 initial={{ opacity: 0, y: -12, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -12, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.25 }}
                 className="mt-4 overflow-hidden bg-white border shadow-2xl border-slate-100 w-96 rounded-3xl"
               >
                 <div className="p-5 border-b bg-slate-50">
@@ -228,7 +232,17 @@ export default function DashboardLayout({
           </AnimatePresence>
         </div>
 
-        {children}
+        {/* Smooth Page Transition */}
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="min-h-full p-12"
+        >
+          {children}
+        </motion.div>
+
       </main>
     </div>
   );
@@ -253,7 +267,8 @@ function SidebarItem({
   return (
     <Link href={href} className="relative block">
       <motion.div
-        whileHover={{ x: 4 }}
+        whileHover={{ x: 6, scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className={`flex items-center ${
           collapsed ? "justify-center" : "justify-between"
         } px-4 py-3 rounded-xl transition-all duration-200 ${
@@ -262,7 +277,6 @@ function SidebarItem({
             : "text-slate-400 hover:bg-white/5 hover:text-white"
         }`}
       >
-        {/* Active Accent */}
         {active && (
           <span className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full" />
         )}
