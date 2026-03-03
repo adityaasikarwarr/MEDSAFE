@@ -1,15 +1,9 @@
 "use client";
 
 import { usePatients } from "@/context/PatientContext";
-import {
-  Card,
-  Title,
-  BarChart,
-  DonutChart,
-  AreaChart,
-  Metric,
-  Text,
-} from "@tremor/react";
+import { ResponsivePie } from "@nivo/pie";
+import { ResponsiveBar } from "@nivo/bar";
+import { ResponsiveLine } from "@nivo/line";
 import { motion } from "framer-motion";
 
 export default function AnalyticsPage() {
@@ -28,16 +22,18 @@ export default function AnalyticsPage() {
   const lowPatients = patients.filter((p) => p.risk === "Low").length;
 
   const riskData = [
-    { name: "Critical", value: criticalPatients },
-    { name: "High", value: highPatients },
-    { name: "Medium", value: mediumPatients },
-    { name: "Low", value: lowPatients },
+    { id: "Critical", label: "Critical", value: criticalPatients },
+    { id: "High", label: "High", value: highPatients },
+    { id: "Medium", label: "Medium", value: mediumPatients },
+    { id: "Low", label: "Low", value: lowPatients },
   ];
 
-  const alertData = ["Critical", "High", "Medium", "Low"].map((level) => ({
-    name: level,
-    Alerts: activeAlerts.filter((a) => a.severity === level).length,
-  }));
+  const alertSeverityData = ["Critical", "High", "Medium", "Low"].map(
+    (level) => ({
+      severity: level,
+      Alerts: activeAlerts.filter((a) => a.severity === level).length,
+    }),
+  );
 
   const departmentData = Object.values(
     patients.reduce((acc: any, patient) => {
@@ -50,14 +46,19 @@ export default function AnalyticsPage() {
     }, {}),
   );
 
-  const trendData = Object.values(
-    alerts.reduce((acc: any, alert) => {
-      const day = new Date(alert.timestamp).toLocaleDateString();
-      acc[day] = acc[day] || { date: day, Alerts: 0 };
-      acc[day].Alerts += 1;
-      return acc;
-    }, {}),
-  );
+  const trendData = [
+    {
+      id: "Alerts",
+      data: Object.values(
+        alerts.reduce((acc: any, alert) => {
+          const day = new Date(alert.timestamp).toLocaleDateString();
+          acc[day] = acc[day] || { x: day, y: 0 };
+          acc[day].y += 1;
+          return acc;
+        }, {}),
+      ),
+    },
+  ];
 
   const resolutionRate =
     alerts.length === 0
@@ -86,11 +87,11 @@ export default function AnalyticsPage() {
           Hospital Intelligence Analytics
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Real-time operational performance dashboard
+          Real-time clinical system monitoring
         </p>
       </div>
 
-      {/* KPI SECTION */}
+      {/* KPI GRID */}
       <div className="grid gap-6 md:grid-cols-4">
         <KPI label="System Health" value={`${healthScore}%`} />
         <KPI label="Resolution Rate" value={`${resolutionRate}%`} />
@@ -98,51 +99,61 @@ export default function AnalyticsPage() {
         <KPI label="Admitted Patients" value={admittedPatients} />
       </div>
 
-      {/* CHARTS */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Card className="border shadow-md rounded-3xl border-slate-100">
-          <Title>Patient Risk Distribution</Title>
-          <DonutChart
+      {/* CHART GRID */}
+      <div className="grid gap-10 lg:grid-cols-2">
+        <ChartCard title="Patient Risk Distribution">
+          <ResponsivePie
             data={riskData}
-            category="value"
-            index="name"
-            colors={["red", "orange", "yellow", "emerald"]}
-            className="mt-6"
+            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            innerRadius={0.65}
+            padAngle={2}
+            cornerRadius={6}
+            colors={{ scheme: "set2" }}
+            enableArcLinkLabels={false}
+            animate={true}
           />
-        </Card>
+        </ChartCard>
 
-        <Card className="border shadow-md rounded-3xl border-slate-100">
-          <Title>Active Alert Severity</Title>
-          <BarChart
-            data={alertData}
-            index="name"
-            categories={["Alerts"]}
-            colors={["blue"]}
-            className="mt-6"
+        <ChartCard title="Active Alert Severity">
+          <ResponsiveBar
+            data={alertSeverityData}
+            keys={["Alerts"]}
+            indexBy="severity"
+            margin={{ top: 20, right: 20, bottom: 50, left: 40 }}
+            padding={0.4}
+            borderRadius={8}
+            colors={{ scheme: "nivo" }}
+            animate={true}
           />
-        </Card>
+        </ChartCard>
 
-        <Card className="border shadow-md rounded-3xl border-slate-100">
-          <Title>Department Distribution</Title>
-          <BarChart
+        <ChartCard title="Department Distribution">
+          <ResponsiveBar
             data={departmentData}
-            index="department"
-            categories={["Patients"]}
-            colors={["indigo"]}
-            className="mt-6"
+            keys={["Patients"]}
+            indexBy="department"
+            margin={{ top: 20, right: 20, bottom: 50, left: 40 }}
+            padding={0.4}
+            borderRadius={8}
+            colors={{ scheme: "category10" }}
+            animate={true}
           />
-        </Card>
+        </ChartCard>
 
-        <Card className="border shadow-md rounded-3xl border-slate-100">
-          <Title>Alert Trend</Title>
-          <AreaChart
+        <ChartCard title="Alert Trend">
+          <ResponsiveLine
             data={trendData}
-            index="date"
-            categories={["Alerts"]}
-            colors={["rose"]}
-            className="mt-6"
+            margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
+            curve="monotoneX"
+            colors={["#2563eb"]}
+            pointSize={8}
+            pointBorderWidth={2}
+            enableArea={true}
+            areaOpacity={0.1}
+            useMesh={true}
+            animate={true}
           />
-        </Card>
+        </ChartCard>
       </div>
     </div>
   );
@@ -155,10 +166,31 @@ function KPI({ label, value }: { label: string; value: any }) {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="p-6 bg-white border shadow-md rounded-3xl border-slate-100"
+      className="p-6 bg-white border shadow-lg rounded-3xl border-slate-100"
     >
-      <Text>{label}</Text>
-      <Metric className="mt-2">{value}</Metric>
+      <p className="text-xs tracking-wide uppercase text-slate-500">{label}</p>
+      <h2 className="mt-3 text-3xl font-semibold text-slate-900">{value}</h2>
+    </motion.div>
+  );
+}
+
+/* CHART CARD */
+function ChartCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 25 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 h-[350px]"
+    >
+      <h3 className="mb-4 text-sm font-semibold text-slate-700">{title}</h3>
+      <div className="h-[260px]">{children}</div>
     </motion.div>
   );
 }
