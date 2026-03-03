@@ -1,5 +1,7 @@
 "use client";
 
+import { notesService, Note } from "@/services/notesService";
+import { useAuth } from "@/context/AuthContext";
 import { VitalsEntry } from "@/services/vitalsHistoryService";
 import { vitalsHistoryService } from "@/services/vitalsHistoryService";
 import RoleGuard from "@/components/dashboard/RoleGuard";
@@ -14,16 +16,21 @@ export default function PatientDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { patients, alerts, updatePatient } = usePatients();
+  const { user } = useAuth();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [history, setHistory] = useState<VitalsEntry[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [noteInput, setNoteInput] = useState("");
 
+  /* ================= Load Patient ================= */
   useEffect(() => {
     const found = patients.find((p) => String(p.id) === String(id));
     if (found) setPatient(found);
   }, [patients, id]);
 
+  /* ================= Load Activities ================= */
   useEffect(() => {
     if (!patient) return;
 
@@ -38,16 +45,28 @@ export default function PatientDetailPage() {
     loadActivities();
   }, [patient]);
 
-  // Simulated vitals history
+  /* ================= Load Vitals History ================= */
   useEffect(() => {
     if (!patient) return;
 
     const loadHistory = async () => {
       const historyData = await vitalsHistoryService.getByPatient(patient.id);
-      setHistory(historyData.slice(-10)); // last 10 entries
+      setHistory(historyData.slice(-10));
     };
 
     loadHistory();
+  }, [patient]);
+
+  /* ================= Load Notes ================= */
+  useEffect(() => {
+    if (!patient) return;
+
+    const loadNotes = async () => {
+      const patientNotes = await notesService.getByPatient(patient.id);
+      setNotes(patientNotes.reverse());
+    };
+
+    loadNotes();
   }, [patient]);
 
   if (!patient) {
@@ -56,9 +75,28 @@ export default function PatientDetailPage() {
 
   const relatedAlerts = alerts.filter((a) => a.message.includes(patient.name));
 
+  /* ================= Discharge ================= */
   async function dischargePatient() {
     await updatePatient({ ...patient, status: "Discharged" });
     router.push("/dashboard/patients");
+  }
+
+  /* ================= Add Note ================= */
+  async function handleAddNote() {
+    if (!noteInput.trim() || !user || !patient) return;
+
+    await notesService.add({
+      id: Date.now(),
+      patientId: patient.id,
+      role: user.role,
+      author: user.name,
+      content: noteInput,
+      timestamp: Date.now(),
+    });
+
+    const updated = await notesService.getByPatient(patient.id);
+    setNotes(updated.reverse());
+    setNoteInput("");
   }
 
   return (
@@ -97,7 +135,7 @@ export default function PatientDetailPage() {
         </div>
       </div>
 
-      {/* Profile Section */}
+      {/* Profile */}
       <div className="grid grid-cols-3 gap-6 p-6 bg-white border shadow rounded-2xl">
         <Info label="Age" value={patient.age} />
         <Info label="Gender" value={patient.gender} />
@@ -152,7 +190,7 @@ export default function PatientDetailPage() {
         ))}
       </div>
 
-      {/* Activity Timeline */}
+      {/* Activity */}
       <div className="p-6 space-y-4 bg-white border shadow rounded-2xl">
         <h2 className="text-lg font-semibold text-gray-800">
           Activity History
@@ -172,17 +210,53 @@ export default function PatientDetailPage() {
         ))}
       </div>
 
+      {/* Clinical Notes */}
+      <div className="p-6 space-y-4 bg-white border shadow rounded-2xl">
+        <h2 className="text-lg font-semibold text-gray-800">Clinical Notes</h2>
+
+        {notes.length === 0 && (
+          <p className="text-sm text-gray-500">No notes recorded.</p>
+        )}
+
+        {notes.map((note) => (
+          <div key={note.id} className="pb-3 border-b">
+            <p className="text-sm text-gray-800">{note.content}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {note.role} • {note.author} •{" "}
+              {new Date(note.timestamp).toLocaleString()}
+            </p>
+          </div>
+        ))}
+
+        {(user?.role === "DOCTOR" ||
+          user?.role === "NURSE" ||
+          user?.role === "ADMIN") && (
+          <div className="flex gap-3 pt-4">
+            <input
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              placeholder="Add clinical note..."
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <button
+              onClick={handleAddNote}
+              className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Add
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Discharge */}
       {patient.status !== "Discharged" && (
         <RoleGuard allow={["ADMIN", "DOCTOR"]}>
-          {patient.status !== "Discharged" && (
-            <button
-              onClick={dischargePatient}
-              className="px-6 py-2 text-white transition bg-red-600 rounded-lg hover:bg-red-700"
-            >
-              Discharge Patient
-            </button>
-          )}
+          <button
+            onClick={dischargePatient}
+            className="px-6 py-2 text-white transition bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            Discharge Patient
+          </button>
         </RoleGuard>
       )}
     </div>

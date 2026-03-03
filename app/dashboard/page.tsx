@@ -1,223 +1,147 @@
 "use client";
 
 import { usePatients } from "@/context/PatientContext";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
-} from "recharts";
+import { motion } from "framer-motion";
+import { AlertTriangle, Users, Activity, TrendingUp } from "lucide-react";
 
 export default function DashboardPage() {
   const { patients, alerts } = usePatients();
 
-  const total = patients.length;
-  const critical = patients.filter((p) => p.risk === "Critical").length;
-  const medium = patients.filter((p) => p.risk === "Medium").length;
-  const low = patients.filter((p) => p.risk === "Low").length;
-
+  const totalPatients = patients.length;
   const activeAlerts = alerts.filter((a) => !a.resolved).length;
+  const criticalPatients = patients.filter((p) => p.risk === "Critical").length;
 
-  const riskData = [
-    { name: "Critical", value: critical },
-    { name: "Medium", value: medium },
-    { name: "Low", value: low },
-  ];
+  const icuPatients = patients.filter(
+    (p) => p.department === "ICU" && p.status !== "Discharged",
+  ).length;
 
-  const COLORS = ["#ef4444", "#f59e0b", "#10b981"];
-
-  const departmentData = Object.values(
-    patients.reduce((acc: any, patient) => {
-      acc[patient.department] = acc[patient.department] || {
-        department: patient.department,
-        count: 0,
-      };
-      acc[patient.department].count += 1;
-      return acc;
-    }, {}),
-  );
-
-  const alertTrend = [{ name: "Now", alerts: activeAlerts }];
+  const riskCounts = {
+    Low: patients.filter((p) => p.risk === "Low").length,
+    Medium: patients.filter((p) => p.risk === "Medium").length,
+    High: patients.filter((p) => p.risk === "High").length,
+    Critical: patients.filter((p) => p.risk === "Critical").length,
+  };
 
   return (
-    <div className="space-y-10">
+    <div className="p-8 space-y-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Clinical Analytics Overview
-        </h1>
-        <p className="text-sm text-gray-500">
-          Intelligent real-time monitoring & risk distribution
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">Clinical Overview</h1>
+        <p className="text-gray-500">Real-time operational analytics</p>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid md:grid-cols-4 gap-6">
-        <MetricCard label="Total Patients" value={total} />
-        <MetricCard
-          label="Critical Cases"
-          value={critical}
-          color="text-red-600"
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          icon={<Users size={20} />}
+          title="Total Patients"
+          value={totalPatients}
+          color="bg-blue-50 text-blue-600"
         />
-        <MetricCard
-          label="Active Alerts"
+
+        <StatCard
+          icon={<AlertTriangle size={20} />}
+          title="Active Alerts"
           value={activeAlerts}
-          color="text-yellow-600"
+          color="bg-red-50 text-red-600"
         />
-        <MetricCard label="Departments" value={departmentData.length} />
+
+        <StatCard
+          icon={<Activity size={20} />}
+          title="Critical Patients"
+          value={criticalPatients}
+          color="bg-orange-50 text-orange-600"
+        />
+
+        <StatCard
+          icon={<TrendingUp size={20} />}
+          title="ICU Occupancy"
+          value={icuPatients}
+          color="bg-purple-50 text-purple-600"
+        />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Donut Chart */}
-        <ChartCard title="Risk Distribution">
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={riskData}
-                dataKey="value"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={5}
-                animationDuration={800}
-              >
-                {riskData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: "#111827",
-                  border: "none",
-                  borderRadius: "12px",
-                  color: "white",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
+      {/* Risk Distribution */}
+      <div className="p-6 space-y-6 bg-white border shadow rounded-2xl">
+        <h2 className="text-lg font-semibold text-gray-800">
+          Risk Distribution
+        </h2>
 
-        {/* Department Bar */}
-        <ChartCard title="Department Load">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={departmentData}>
-              <XAxis
-                dataKey="department"
-                tick={{ fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis hide />
-              <Tooltip
-                contentStyle={{
-                  background: "#111827",
-                  border: "none",
-                  borderRadius: "12px",
-                  color: "white",
-                }}
-              />
-              <Bar
-                dataKey="count"
-                fill="#3b82f6"
-                radius={[10, 10, 0, 0]}
-                animationDuration={800}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        <div className="space-y-4">
+          {Object.entries(riskCounts).map(([risk, count]) => (
+            <div key={risk}>
+              <div className="flex justify-between mb-1 text-sm">
+                <span>{risk}</span>
+                <span>{count}</span>
+              </div>
 
-        {/* Professional Area Chart */}
-        <ChartCard title="Active Alerts Trend">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={alertTrend}>
-              <defs>
-                <linearGradient id="colorAlerts" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis hide />
-              <Tooltip
-                contentStyle={{
-                  background: "#111827",
-                  border: "none",
-                  borderRadius: "12px",
-                  color: "white",
-                }}
-              />
-
-              <Area
-                type="monotone"
-                dataKey="alerts"
-                stroke="#ef4444"
-                fill="url(#colorAlerts)"
-                strokeWidth={3}
-                animationDuration={800}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
+              <div className="w-full h-3 bg-gray-200 rounded-full">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${
+                      totalPatients === 0 ? 0 : (count / totalPatients) * 100
+                    }%`,
+                  }}
+                  transition={{ duration: 0.6 }}
+                  className={`h-3 rounded-full ${
+                    risk === "Critical"
+                      ? "bg-red-500"
+                      : risk === "High"
+                        ? "bg-orange-500"
+                        : risk === "Medium"
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                  }`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* AI Insight */}
-      <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-2xl">
-        <h3 className="font-semibold text-blue-700 text-sm mb-2">AI Insight</h3>
-        <p className="text-sm text-blue-900">
-          {critical > 0
-            ? "High-risk patients detected. Immediate clinical intervention recommended."
-            : "System stable. No abnormal safety patterns detected."}
-        </p>
+      {/* Recent Alerts Snapshot */}
+      <div className="p-6 space-y-4 bg-white border shadow rounded-2xl">
+        <h2 className="text-lg font-semibold text-gray-800">Recent Alerts</h2>
+
+        {alerts.slice(0, 5).map((alert) => (
+          <div key={alert.id} className="pb-2 border-b">
+            <p className="text-sm text-gray-800">{alert.message}</p>
+            <p className="text-xs text-gray-500">
+              {new Date(alert.timestamp).toLocaleString()}
+            </p>
+          </div>
+        ))}
+
+        {alerts.length === 0 && (
+          <p className="text-sm text-gray-500">No alerts available.</p>
+        )}
       </div>
     </div>
   );
 }
 
-/* Metric Card */
-function MetricCard({
-  label,
-  value,
-  color = "text-gray-900",
-}: {
-  label: string;
-  value: number;
-  color?: string;
-}) {
-  return (
-    <div className="bg-white/80 backdrop-blur-lg p-6 rounded-2xl shadow-md border border-gray-100">
-      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-      <h2 className={`text-3xl font-bold mt-2 ${color}`}>{value}</h2>
-    </div>
-  );
-}
-
-/* Chart Card */
-function ChartCard({
+function StatCard({
+  icon,
   title,
-  children,
+  value,
+  color,
 }: {
+  icon: React.ReactNode;
   title: string;
-  children: React.ReactNode;
+  value: number;
+  color: string;
 }) {
   return (
-    <div className="bg-white/80 backdrop-blur-lg p-6 rounded-2xl shadow-md border border-gray-100">
-      <h3 className="text-sm font-semibold text-gray-700 mb-4">{title}</h3>
-      {children}
-    </div>
+    <motion.div
+      whileHover={{ scale: 1.04 }}
+      className={`p-6 rounded-2xl shadow-md flex items-center gap-4 ${color}`}
+    >
+      {icon}
+      <div>
+        <p className="text-sm opacity-70">{title}</p>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+    </motion.div>
   );
 }
