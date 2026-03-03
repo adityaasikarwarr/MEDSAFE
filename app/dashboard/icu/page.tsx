@@ -1,10 +1,11 @@
 "use client";
 
+import { vitalsHistoryService } from "@/services/vitalsHistoryService";
 import { usePatients } from "@/context/PatientContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { HeartPulse, Activity, User, Stethoscope } from "lucide-react";
+import { HeartPulse, Activity, User } from "lucide-react";
 
 export default function ICUPage() {
   const { patients, updatePatient } = usePatients();
@@ -18,7 +19,7 @@ export default function ICUPage() {
     const interval = setInterval(() => {
       const updated: Record<number, any> = {};
 
-      patients.forEach((p) => {
+      patients.forEach(async (p) => {
         const heartRate = Math.floor(Math.random() * 40) + 70;
         const oxygen = Math.floor(Math.random() * 10) + 90;
 
@@ -29,6 +30,13 @@ export default function ICUPage() {
         else if (heartRate > 85) newRisk = "Medium";
 
         updatePatient({ ...p, risk: newRisk as any });
+        await vitalsHistoryService.add({
+          patientId: p.id,
+          hr: heartRate,
+          o2: oxygen,
+          bp: p.vitals?.bp || "",
+          timestamp: Date.now(),
+        });
 
         updated[p.id] = {
           heartRate,
