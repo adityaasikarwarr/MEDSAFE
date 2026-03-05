@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   LayoutDashboard,
   Users,
@@ -27,6 +28,7 @@ export default function DashboardLayout({
 }) {
   const { user, logout } = useAuth();
   const { alerts } = usePatients();
+
   const pathname = usePathname();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -35,38 +37,54 @@ export default function DashboardLayout({
   const [showNotifications, setShowNotifications] = useState(false);
 
   const activeAlerts = alerts?.filter((a) => !a.resolved) || [];
-  const userPermissions = user ? getPermissions(user.role) : null;
+  const permissions = user ? getPermissions(user.role) : null;
+
+  /* CLOSE NOTIFICATION DROPDOWN */
 
   useEffect(() => {
-    function handleClickOutside(event: any) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowNotifications(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  /* AUTH PROTECTION */
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/");
+    }
+  }, [user, router]);
 
   if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-[radial-gradient(circle_at_20%_20%,#f8fafc,#eef2f7)] overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100">
 
       {/* ================= SIDEBAR ================= */}
+
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 90 : 270 }}
         transition={{ type: "spring", stiffness: 220, damping: 30 }}
-        className="flex flex-col justify-between text-white border-r shadow-2xl bg-slate-900/95 backdrop-blur-xl border-white/5"
+        className="flex flex-col justify-between text-white border-r shadow-xl bg-slate-900 border-white/10"
       >
-        {/* Header */}
+        {/* HEADER */}
+
         <div>
           <div className="flex items-center justify-between p-5 border-b border-white/10">
             {!collapsed && (
               <div>
-                <h1 className="text-xl font-semibold tracking-tight">
-                  MedSafe AI
-                </h1>
+                <h1 className="text-xl font-semibold">MedSafe AI</h1>
                 <p className="text-xs text-slate-400">
                   Clinical Platform
                 </p>
@@ -81,6 +99,8 @@ export default function DashboardLayout({
             </button>
           </div>
 
+          {/* NAVIGATION */}
+
           <nav className="p-4 space-y-2">
             <SidebarItem
               href="/"
@@ -89,6 +109,7 @@ export default function DashboardLayout({
               active={pathname === "/"}
               collapsed={collapsed}
             />
+
             <SidebarItem
               href="/dashboard"
               icon={<LayoutDashboard size={18} />}
@@ -96,6 +117,7 @@ export default function DashboardLayout({
               active={pathname === "/dashboard"}
               collapsed={collapsed}
             />
+
             <SidebarItem
               href="/dashboard/patients"
               icon={<Users size={18} />}
@@ -103,6 +125,7 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/patients")}
               collapsed={collapsed}
             />
+
             <SidebarItem
               href="/dashboard/medication"
               icon={<Pill size={18} />}
@@ -110,6 +133,7 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/medication")}
               collapsed={collapsed}
             />
+
             <SidebarItem
               href="/dashboard/alerts"
               icon={<Bell size={18} />}
@@ -122,6 +146,7 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/alerts")}
               collapsed={collapsed}
             />
+
             <SidebarItem
               href="/dashboard/icu"
               icon={<Activity size={18} />}
@@ -129,6 +154,7 @@ export default function DashboardLayout({
               active={pathname.startsWith("/dashboard/icu")}
               collapsed={collapsed}
             />
+
             <SidebarItem
               href="/dashboard/analytics"
               icon={<BarChart3 size={18} />}
@@ -137,7 +163,7 @@ export default function DashboardLayout({
               collapsed={collapsed}
             />
 
-            {userPermissions?.canAccessSettings && (
+            {permissions?.canAccessSettings && (
               <SidebarItem
                 href="/dashboard/settings"
                 icon={<Settings size={18} />}
@@ -149,7 +175,8 @@ export default function DashboardLayout({
           </nav>
         </div>
 
-        {/* User Section */}
+        {/* USER PANEL */}
+
         <div className="p-5 border-t border-white/10">
           {!collapsed && (
             <>
@@ -158,34 +185,34 @@ export default function DashboardLayout({
             </>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => {
               logout();
               router.replace("/");
             }}
-            className="flex items-center gap-2 text-sm transition text-slate-300 hover:text-white"
+            className="flex items-center gap-2 text-sm text-slate-300 hover:text-white"
           >
             <LogOut size={16} />
             {!collapsed && "Logout"}
-          </motion.button>
+          </button>
         </div>
       </motion.aside>
 
       {/* ================= MAIN ================= */}
+
       <main className="relative flex-1 overflow-y-auto">
 
-        {/* Notifications */}
+        {/* NOTIFICATIONS */}
+
         <div className="fixed z-50 top-6 right-10" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-3 transition bg-white shadow-lg rounded-2xl hover:shadow-xl"
+            className="relative p-3 bg-white shadow rounded-2xl"
           >
             <Bell size={20} className="text-slate-700" />
 
             {activeAlerts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full">
+              <span className="absolute -top-1 -right-1 px-2 py-0.5 text-xs text-white bg-red-500 rounded-full">
                 {activeAlerts.length}
               </span>
             )}
@@ -194,13 +221,12 @@ export default function DashboardLayout({
           <AnimatePresence>
             {showNotifications && (
               <motion.div
-                initial={{ opacity: 0, y: -12, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -12, scale: 0.95 }}
-                transition={{ duration: 0.25 }}
-                className="mt-4 overflow-hidden bg-white border shadow-2xl border-slate-100 w-96 rounded-3xl"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-4 overflow-hidden bg-white border shadow-xl border-slate-100 w-96 rounded-2xl"
               >
-                <div className="p-5 border-b bg-slate-50">
+                <div className="p-4 border-b bg-slate-50">
                   <h3 className="font-semibold text-slate-800">
                     Active Alerts
                   </h3>
@@ -211,12 +237,12 @@ export default function DashboardLayout({
                     activeAlerts.map((alert) => (
                       <div
                         key={alert.id}
-                        className="px-5 py-4 transition border-b hover:bg-slate-50"
+                        className="px-4 py-3 border-b hover:bg-slate-50"
                       >
                         <p className="text-sm font-medium text-slate-800">
                           {alert.message}
                         </p>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="text-xs text-slate-400">
                           {alert.severity}
                         </p>
                       </div>
@@ -232,23 +258,24 @@ export default function DashboardLayout({
           </AnimatePresence>
         </div>
 
-        {/* Smooth Page Transition */}
+        {/* PAGE TRANSITION */}
+
         <motion.div
           key={pathname}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="min-h-full p-12"
+          transition={{ duration: 0.3 }}
+          className="min-h-full p-10"
         >
           {children}
         </motion.div>
-
       </main>
     </div>
   );
 }
 
-/* ================= SIDEBAR ITEM ================= */
+/* SIDEBAR ITEM */
+
 function SidebarItem({
   href,
   icon,
@@ -265,25 +292,19 @@ function SidebarItem({
   collapsed?: boolean;
 }) {
   return (
-    <Link href={href} className="relative block">
-      <motion.div
-        whileHover={{ x: 6, scale: 1.02 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    <Link href={href}>
+      <div
         className={`flex items-center ${
           collapsed ? "justify-center" : "justify-between"
-        } px-4 py-3 rounded-xl transition-all duration-200 ${
+        } px-4 py-3 rounded-xl transition ${
           active
             ? "bg-white/10 text-white"
             : "text-slate-400 hover:bg-white/5 hover:text-white"
         }`}
       >
-        {active && (
-          <span className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full" />
-        )}
-
         <div className="flex items-center gap-3">
           {icon}
-          {!collapsed && <span className="text-sm font-medium">{label}</span>}
+          {!collapsed && <span className="text-sm">{label}</span>}
         </div>
 
         {!collapsed && badge && (
@@ -291,7 +312,7 @@ function SidebarItem({
             {badge}
           </span>
         )}
-      </motion.div>
+      </div>
     </Link>
   );
 }
