@@ -8,29 +8,35 @@ import { motion } from "framer-motion";
 import { HeartPulse, Activity, User } from "lucide-react";
 import StatusCard from "@/components/ui/StatusCard";
 
+type VitalState = {
+  heartRate: number;
+  oxygen: number;
+  updatedAt: string;
+};
+
 export default function ICUPage() {
   const { patients, updatePatient } = usePatients();
   const { settings } = useSettings();
 
-  const [vitals, setVitals] = useState<Record<number, any>>({});
+  const [vitals, setVitals] = useState<Record<number, VitalState>>({});
 
   useEffect(() => {
     if (!settings.icuAutoMonitoring) return;
 
-    const interval = setInterval(() => {
-      const updated: Record<number, any> = {};
+    const interval = setInterval(async () => {
+      const updated: Record<number, VitalState> = {};
 
-      patients.forEach(async (p) => {
+      for (const p of patients) {
         const heartRate = Math.floor(Math.random() * 40) + 70;
         const oxygen = Math.floor(Math.random() * 10) + 90;
 
-        let newRisk = "Low";
+        let newRisk: "Low" | "Medium" | "High" | "Critical" = "Low";
 
         if (heartRate > 110 || oxygen < 92) newRisk = "Critical";
         else if (heartRate > 95) newRisk = "High";
         else if (heartRate > 85) newRisk = "Medium";
 
-        updatePatient({ ...p, risk: newRisk as any });
+        updatePatient({ ...p, risk: newRisk });
 
         await vitalsHistoryService.add({
           patientId: p.id,
@@ -45,7 +51,7 @@ export default function ICUPage() {
           oxygen,
           updatedAt: new Date().toLocaleTimeString(),
         };
-      });
+      }
 
       setVitals(updated);
     }, 3000);
@@ -55,11 +61,13 @@ export default function ICUPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">ICU Monitor</h1>
         <p className="text-slate-500">Real-time patient monitoring dashboard</p>
       </div>
 
+      {/* Empty State */}
       {patients.length === 0 && (
         <StatusCard
           title="No ICU Patients"
@@ -67,88 +75,95 @@ export default function ICUPage() {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {patients.map((patient) => {
-          const data = vitals[patient.id];
+      {/* ICU Grid */}
+      {patients.length > 0 && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {patients.map((patient) => {
+            const data = vitals[patient.id];
 
-          return (
-            <motion.div
-              key={patient.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-              className={`p-6 space-y-5 bg-white border shadow-lg rounded-2xl transition ${
-                patient.risk === "Critical"
-                  ? "border-red-400"
-                  : patient.risk === "High"
-                    ? "border-orange-400"
-                    : patient.risk === "Medium"
-                      ? "border-yellow-400"
-                      : "border-green-400"
-              }`}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                    <User size={16} /> {patient.name}
-                  </h2>
-                  <p className="text-sm text-slate-500">{patient.department}</p>
+            return (
+              <motion.div
+                key={patient.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                whileHover={{ scale: 1.02 }}
+                className={`p-6 space-y-5 bg-white border rounded-2xl shadow-sm transition ${
+                  patient.risk === "Critical"
+                    ? "border-red-400"
+                    : patient.risk === "High"
+                      ? "border-orange-400"
+                      : patient.risk === "Medium"
+                        ? "border-yellow-400"
+                        : "border-green-400"
+                }`}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                      <User size={16} />
+                      {patient.name}
+                    </h2>
+
+                    <p className="text-sm text-slate-500">
+                      {patient.department}
+                    </p>
+                  </div>
+
+                  <RiskBadge risk={patient.risk} />
                 </div>
 
-                <RiskBadge risk={patient.risk} />
-              </div>
-
-              {/* Patient Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-                <Info label="Age" value={patient.age} />
-                <Info label="Status" value={patient.status} />
-                <Info
-                  label="Medications"
-                  value={
-                    patient.medications?.length
-                      ? patient.medications.join(", ")
-                      : "None"
-                  }
-                />
-              </div>
-
-              {/* Vitals */}
-              {data && (
-                <div className="space-y-4">
-                  <VitalBar
-                    icon={<HeartPulse size={16} />}
-                    label="Heart Rate"
-                    value={data.heartRate}
-                    unit="bpm"
-                    max={150}
-                    risk={patient.risk}
+                {/* Patient Info */}
+                <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
+                  <Info label="Age" value={patient.age} />
+                  <Info label="Status" value={patient.status} />
+                  <Info
+                    label="Medications"
+                    value={
+                      patient.medications?.length
+                        ? patient.medications.join(", ")
+                        : "None"
+                    }
                   />
-
-                  <VitalBar
-                    icon={<Activity size={16} />}
-                    label="Oxygen"
-                    value={data.oxygen}
-                    unit="%"
-                    max={100}
-                    risk={patient.risk}
-                  />
-
-                  <p className="text-xs text-slate-400">
-                    Updated at {data.updatedAt}
-                  </p>
                 </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
+
+                {/* Vitals */}
+                {data && (
+                  <div className="space-y-4">
+                    <VitalBar
+                      icon={<HeartPulse size={16} />}
+                      label="Heart Rate"
+                      value={data.heartRate}
+                      unit="bpm"
+                      max={150}
+                      risk={patient.risk}
+                    />
+
+                    <VitalBar
+                      icon={<Activity size={16} />}
+                      label="Oxygen"
+                      value={data.oxygen}
+                      unit="%"
+                      max={100}
+                      risk={patient.risk}
+                    />
+
+                    <p className="text-xs text-slate-400">
+                      Updated at {data.updatedAt}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-/* ========================== */
+/* ============================= */
 
 function RiskBadge({ risk }: { risk: string }) {
   const styles =
@@ -161,7 +176,7 @@ function RiskBadge({ risk }: { risk: string }) {
           : "bg-green-100 text-green-700 border border-green-200";
 
   return (
-    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${styles}`}>
+    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${styles}`}>
       {risk}
     </span>
   );
@@ -191,7 +206,7 @@ function VitalBar({
   max: number;
   risk: string;
 }) {
-  const percentage = (value / max) * 100;
+  const percentage = Math.min((value / max) * 100, 100);
 
   const barColor =
     risk === "Critical"
@@ -217,12 +232,12 @@ function VitalBar({
         </span>
       </div>
 
-      <div className="w-full h-2 bg-gray-200 rounded-full">
+      <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
         <motion.div
-          className={`h-2 rounded-full ${barColor}`}
+          className={`h-full ${barColor}`}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         />
       </div>
     </div>
