@@ -7,9 +7,11 @@ import { Patient } from "@/types/patient";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import RoleGuard from "@/components/dashboard/RoleGuard";
+import StatusCard from "@/components/ui/StatusCard";
 
 export default function PatientsPage() {
-  const { patients, addPatient, updatePatient, deletePatient } = usePatients();
+  const { patients, loading, addPatient, updatePatient, deletePatient } =
+    usePatients();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -119,6 +121,14 @@ export default function PatientsPage() {
   }, [patients, search, riskFilter, departmentFilter, statusFilter]);
 
   const departments = [...new Set(patients.map((p) => p.department))];
+  if (loading) {
+    return (
+      <StatusCard
+        title="Loading Patients..."
+        description="Please wait while we fetch the patient data."
+      />
+    );
+  }
 
   return (
     <div className="p-8 space-y-8">

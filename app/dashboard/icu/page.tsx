@@ -6,6 +6,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { HeartPulse, Activity, User } from "lucide-react";
+import StatusCard from "@/components/ui/StatusCard";
 
 export default function ICUPage() {
   const { patients, updatePatient } = usePatients();
@@ -60,9 +61,10 @@ export default function ICUPage() {
       </div>
 
       {patients.length === 0 && (
-        <div className="p-12 text-center bg-white shadow text-slate-500 rounded-2xl">
-          No patients currently under ICU monitoring.
-        </div>
+        <StatusCard
+          title="No ICU Patients"
+          description="There are currently no patients under intensive monitoring."
+        />
       )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">

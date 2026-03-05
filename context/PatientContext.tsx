@@ -13,6 +13,7 @@ import { alertService } from "@/services/alertService";
 export type PatientContextType = {
   patients: Patient[];
   alerts: Alert[];
+  loading: boolean;
   addPatient: (patient: Patient) => Promise<void>;
   updatePatient: (patient: Patient) => Promise<void>;
   deletePatient: (id: number) => Promise<void>;
@@ -24,6 +25,7 @@ const PatientContext = createContext<PatientContextType | null>(null);
 export function PatientProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   /* ===============================
@@ -31,10 +33,15 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   =============================== */
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
+
       const storedPatients = await patientService.getAll();
       const storedAlerts = await alertService.getAll();
+
       setPatients(storedPatients);
       setAlerts(storedAlerts);
+
+      setLoading(false);
     };
 
     loadData();
@@ -139,7 +146,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("alerts", JSON.stringify(updatedAlerts));
     setAlerts(updatedAlerts);
 
-    if(user) {
+    if (user) {
       const log = createActivityLog(
         "ALERT_RESOLVED",
         `Alert with ID ${id} resolved`,
@@ -155,6 +162,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       value={{
         patients,
         alerts,
+        loading,
         addPatient,
         updatePatient,
         deletePatient,
