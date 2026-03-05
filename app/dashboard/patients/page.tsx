@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import RoleGuard from "@/components/dashboard/RoleGuard";
 import StatusCard from "@/components/ui/StatusCard";
+import toast from "react-hot-toast";
 
 export default function PatientsPage() {
   const { patients, loading, addPatient, updatePatient, deletePatient } =
@@ -55,6 +56,7 @@ export default function PatientsPage() {
 
   function openEditModal(patient: Patient) {
     setEditingPatient(patient);
+
     setForm({
       name: patient.name,
       age: patient.age,
@@ -66,8 +68,11 @@ export default function PatientsPage() {
       oxygen: patient.vitals?.o2 || "",
       bloodPressure: patient.vitals?.bp || "",
     });
+
     setShowModal(true);
   }
+
+  /* ================= SUBMIT ================= */
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,8 +96,10 @@ export default function PatientsPage() {
 
     if (editingPatient) {
       await updatePatient(patientData);
+      toast.success("Patient updated successfully");
     } else {
       await addPatient(patientData);
+      toast.success("Patient added successfully");
     }
 
     setShowModal(false);
@@ -100,7 +107,9 @@ export default function PatientsPage() {
 
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this patient?")) return;
+
     await deletePatient(id);
+    toast.success("Patient deleted");
   }
 
   /* ================= FILTER LOGIC ================= */
@@ -121,6 +130,7 @@ export default function PatientsPage() {
   }, [patients, search, riskFilter, departmentFilter, statusFilter]);
 
   const departments = [...new Set(patients.map((p) => p.department))];
+
   if (loading) {
     return (
       <StatusCard
@@ -133,11 +143,13 @@ export default function PatientsPage() {
   return (
     <div className="p-8 space-y-8">
       {/* HEADER */}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">
             Patient Management
           </h1>
+
           <p className="mt-1 text-sm text-slate-500">
             Manage admitted patients and monitor status
           </p>
@@ -158,6 +170,7 @@ export default function PatientsPage() {
             >
               Request Patient Admission
             </button>
+
             <span className="absolute px-3 py-1 text-xs text-white transition -translate-x-1/2 bg-black rounded opacity-0 -top-8 left-1/2 group-hover:opacity-100">
               Only Admin can add patients
             </span>
@@ -166,12 +179,13 @@ export default function PatientsPage() {
       </div>
 
       {/* FILTERS */}
+
       <div className="grid gap-4 p-6 bg-white border border-gray-100 shadow rounded-2xl md:grid-cols-4">
         <input
           placeholder="Search patient..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-4 py-2 transition border border-gray-200 outline-none text-slate-800 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="px-4 py-2 transition border border-gray-200 outline-none text-slate-800 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
         />
 
         <FilterDropdown
@@ -196,110 +210,154 @@ export default function PatientsPage() {
         />
       </div>
 
+      {/* EMPTY STATE */}
+
+      {filteredPatients.length === 0 && (
+        <StatusCard
+          title="No Patients Found"
+          description="No patients match your search filters."
+        />
+      )}
+
       {/* PATIENT GRID */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {filteredPatients.map((p) => (
-          <motion.div
-            key={p.id}
-            whileHover={{ y: -6 }}
-            transition={{ duration: 0.2 }}
-            className="p-6 transition bg-white border border-gray-200 shadow-sm cursor-pointer rounded-2xl hover:shadow-lg"
-            onClick={() => router.push(`/dashboard/patients/${p.id}`)}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900">
-                  {p.name}
-                </h2>
-                <p className="text-sm text-slate-500">{p.department}</p>
-              </div>
 
-              <span className="px-3 py-1 text-xs font-medium text-green-600 bg-green-100 rounded-full">
-                {p.status}
-              </span>
-            </div>
-
-            <p className="mt-4 text-sm text-slate-700">
-              <span className="font-medium">Diagnosis:</span> {p.diagnosis}
-            </p>
-
-            <p className="mt-2 text-sm">
-              <span className="font-medium text-slate-700">Risk:</span>{" "}
-              <span className="font-semibold">{p.risk}</span>
-            </p>
-
-            <div
-              className="flex gap-3 pt-6"
-              onClick={(e) => e.stopPropagation()}
+      {filteredPatients.length > 0 && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {filteredPatients.map((p) => (
+            <motion.div
+              key={p.id}
+              whileHover={{ y: -6 }}
+              transition={{ duration: 0.2 }}
+              className="p-6 transition bg-white border border-gray-200 shadow-sm cursor-pointer rounded-2xl hover:shadow-lg"
+              onClick={() => router.push(`/dashboard/patients/${p.id}`)}
             >
-              <RoleGuard allow={["ADMIN", "DOCTOR"]}>
-                <button
-                  onClick={() => openEditModal(p)}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
-                >
-                  Edit
-                </button>
-              </RoleGuard>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    {p.name}
+                  </h2>
 
-              <RoleGuard allow={["ADMIN"]}>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </RoleGuard>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                  <p className="text-sm text-slate-500">{p.department}</p>
+                </div>
 
-      {/* MODAL unchanged */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white w-[680px] p-10 rounded-3xl shadow-2xl"
-          >
-            <h2 className="mb-8 text-2xl font-bold text-gray-900">
-              {editingPatient ? "Edit Patient" : "Register New Patient"}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Full Name"
-                required
-                className="w-full px-4 py-3 border rounded-xl bg-gray-50"
-              />
-
-              <div className="flex justify-end gap-4 pt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-2 text-gray-600 border rounded-xl"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-8 py-2 text-white bg-blue-600 rounded-xl"
-                >
-                  {editingPatient ? "Update Patient" : "Save Patient"}
-                </button>
+                <StatusBadge status={p.status} />
               </div>
-            </form>
-          </motion.div>
+
+              <p className="mt-4 text-sm text-slate-700">
+                <span className="font-medium">Diagnosis:</span> {p.diagnosis}
+              </p>
+
+              <p className="mt-2 text-sm">
+                <span className="font-medium text-slate-700">Risk:</span>{" "}
+                <RiskBadge risk={p.risk} />
+              </p>
+
+              <div
+                className="flex gap-3 pt-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RoleGuard allow={["ADMIN", "DOCTOR"]}>
+                  <button
+                    onClick={() => openEditModal(p)}
+                    className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+                  >
+                    Edit
+                  </button>
+                </RoleGuard>
+
+                <RoleGuard allow={["ADMIN"]}>
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </RoleGuard>
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
+
+      {/* MODAL */}
+
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-[680px] p-10 rounded-3xl shadow-2xl"
+            >
+              <h2 className="mb-8 text-2xl font-bold text-gray-900">
+                {editingPatient ? "Edit Patient" : "Register New Patient"}
+              </h2>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Full Name"
+                  required
+                  className="w-full px-4 py-3 border rounded-xl bg-gray-50"
+                />
+
+                <div className="flex justify-end gap-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-6 py-2 text-gray-600 border rounded-xl"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-8 py-2 text-white bg-blue-600 rounded-xl"
+                  >
+                    {editingPatient ? "Update Patient" : "Save Patient"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* ================= DROPDOWN COMPONENT ================= */
+/* ================= BADGES ================= */
+
+function StatusBadge({ status }: { status: string }) {
+  const style =
+    status === "Admitted"
+      ? "bg-green-100 text-green-600"
+      : "bg-gray-100 text-gray-600";
+
+  return (
+    <span className={`px-3 py-1 text-xs font-medium rounded-full ${style}`}>
+      {status}
+    </span>
+  );
+}
+
+function RiskBadge({ risk }: { risk: string }) {
+  const style =
+    risk === "Critical"
+      ? "text-red-600"
+      : risk === "High"
+        ? "text-orange-600"
+        : risk === "Medium"
+          ? "text-yellow-600"
+          : "text-green-600";
+
+  return <span className={`font-semibold ${style}`}>{risk}</span>;
+}
+
+/* ================= DROPDOWN ================= */
 
 function FilterDropdown({
   label,
@@ -323,9 +381,9 @@ function FilterDropdown({
         <span className="text-sm text-gray-700">
           {label}: <span className="font-medium">{value}</span>
         </span>
+
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
           className="text-gray-400"
         >
           ▼
@@ -338,8 +396,7 @@ function FilterDropdown({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 w-full mt-2 overflow-hidden bg-white border border-gray-200 shadow-lg rounded-xl"
+            className="absolute z-50 w-full mt-2 overflow-hidden bg-white border shadow-lg rounded-xl"
           >
             {options.map((option) => (
               <div
@@ -348,7 +405,7 @@ function FilterDropdown({
                   onChange(option);
                   setOpen(false);
                 }}
-                className={`px-4 py-2 text-sm cursor-pointer hover:bg-blue-50 transition ${
+                className={`px-4 py-2 text-sm cursor-pointer hover:bg-blue-50 ${
                   option === value
                     ? "bg-blue-100 text-blue-600 font-medium"
                     : "text-gray-700"
