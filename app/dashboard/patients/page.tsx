@@ -39,6 +39,7 @@ export default function PatientsPage() {
     department: "ICU",
     diagnosis: "",
     risk: "Low",
+    medications: "",
     heartRate: "",
     oxygen: "",
     bloodPressure: "",
@@ -68,6 +69,7 @@ export default function PatientsPage() {
       department: patient.department,
       diagnosis: patient.diagnosis,
       risk: patient.risk,
+      medications: patient.medications?.join(", ") || "",
       heartRate: patient.vitals?.hr || "",
       oxygen: patient.vitals?.o2 || "",
       bloodPressure: patient.vitals?.bp || "",
@@ -90,7 +92,9 @@ export default function PatientsPage() {
       diagnosis: form.diagnosis,
       status: editingPatient?.status || "Admitted",
       risk: form.risk,
-      medications: editingPatient?.medications || [],
+      medications: form.medications
+        ? form.medications.split(",").map((m: string) => m.trim())
+        : [],
 
       vitals: {
         hr: Number(form.heartRate),
@@ -367,6 +371,20 @@ export default function PatientsPage() {
                     <option>Neurology</option>
                     <option>General Ward</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-slate-700">
+                    Medications
+                  </label>
+
+                  <input
+                    name="medications"
+                    value={form.medications}
+                    onChange={handleChange}
+                    placeholder="Medications"
+                    className={inputStyle}
+                  />
                 </div>
 
                 <input
