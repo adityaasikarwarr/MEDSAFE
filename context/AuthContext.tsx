@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 
-export type Role = "ADMIN" | "DOCTOR" | "NURSE" | "ANALYST";
+export type Role = "ADMIN" | "DOCTOR" | "NURSE" ;
 
 export type AppUser = {
   name: string;

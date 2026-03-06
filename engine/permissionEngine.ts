@@ -36,6 +36,8 @@ export const permissions: Record<Role, PermissionSet> = {
     canViewActivity: false,
     canAccessSettings: false,
   },
+
+  
 };
 
 /* =========================================================
