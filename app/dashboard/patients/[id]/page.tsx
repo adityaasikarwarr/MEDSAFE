@@ -77,6 +77,7 @@ export default function PatientDetailPage() {
 
   /* ================= Discharge ================= */
   async function dischargePatient() {
+    if (!patient) return;
     await updatePatient({ ...patient, status: "Discharged" });
     router.push("/dashboard/patients");
   }
