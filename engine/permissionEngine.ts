@@ -1,19 +1,36 @@
 import { Role } from "@/types/roles";
 
-export const permissions = {
-  Admin: {
+/* =========================================================
+   Permission Map
+   ========================================================= */
+
+type PermissionSet = {
+  canEditPatient: boolean;
+  canDeletePatient: boolean;
+  canViewActivity: boolean;
+  canAccessSettings: boolean;
+};
+
+/* =========================================================
+   Permissions Database
+   ========================================================= */
+
+export const permissions: Record<Role, PermissionSet> = {
+  ADMIN: {
     canEditPatient: true,
     canDeletePatient: true,
     canViewActivity: true,
     canAccessSettings: true,
   },
-  Doctor: {
+
+  DOCTOR: {
     canEditPatient: true,
     canDeletePatient: false,
     canViewActivity: false,
     canAccessSettings: false,
   },
-  Nurse: {
+
+  NURSE: {
     canEditPatient: false,
     canDeletePatient: false,
     canViewActivity: false,
@@ -21,6 +38,10 @@ export const permissions = {
   },
 };
 
+/* =========================================================
+   Permission Getter
+   ========================================================= */
+
 export function getPermissions(role: Role) {
-  return permissions[role];
+  return permissions[role] ?? permissions.NURSE;
 }
