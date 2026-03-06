@@ -1,22 +1,23 @@
 "use client";
 
+import { Role } from "@/types/roles";
 import { useAuth } from "@/context/AuthContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Bell, Shield, Palette } from "lucide-react";
+import { User, Bell, Palette } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, login } = useAuth();
   const { settings, updateSettings } = useSettings();
 
   const [name, setName] = useState("");
-  const [role, setRole] = useState("Doctor");
+  const [role, setRole] = useState<Role>("DOCTOR");
 
   useEffect(() => {
     if (user) {
       setName(user.name);
-      setRole(user.role);
+      setRole(user.role as Role);
     }
   }, [user]);
 
@@ -25,27 +26,42 @@ export default function SettingsPage() {
 
     login({
       name,
-      role,
+      role: role as Role,
       email: user.email,
     });
   };
 
   return (
-    <div className="space-y-10 max-w-5xl">
+    <div className="max-w-5xl space-y-10">
       <Header />
 
+      {/* Profile Settings */}
       <AnimatedSection icon={<User size={18} />} title="Profile Settings">
         <Input label="Full Name" value={name} onChange={setName} />
-        <Input label="Role" value={role} onChange={setRole} />
+
+        <div>
+          <label className="text-sm text-gray-500">Role</label>
+
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+            className="w-full px-4 py-3 mt-2 transition border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="ADMIN">ADMIN</option>
+            <option value="DOCTOR">DOCTOR</option>
+            <option value="NURSE">NURSE</option>
+          </select>
+        </div>
 
         <button
           onClick={saveProfile}
-          className="mt-4 bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-2 rounded-xl shadow-md"
+          className="px-6 py-2 mt-4 text-white transition bg-blue-600 shadow-md hover:bg-blue-700 rounded-xl"
         >
           Save Profile
         </button>
       </AnimatedSection>
 
+      {/* Theme Preferences */}
       <AnimatedSection icon={<Palette size={18} />} title="Theme Preferences">
         <ModernToggle
           label="Dark Mode"
@@ -58,6 +74,7 @@ export default function SettingsPage() {
         />
       </AnimatedSection>
 
+      {/* Notification Settings */}
       <AnimatedSection icon={<Bell size={18} />} title="Notification Settings">
         <ModernToggle
           label="Enable Notifications"
@@ -99,7 +116,7 @@ function Header() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-      <p className="text-gray-500 mt-1">
+      <p className="mt-1 text-gray-500">
         Manage your profile and system preferences
       </p>
     </div>
@@ -120,12 +137,10 @@ function AnimatedSection({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 space-y-6"
+      className="p-8 space-y-6 bg-white border border-gray-100 shadow-xl rounded-2xl"
     >
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-          {icon}
-        </div>
+        <div className="p-2 text-blue-600 rounded-lg bg-blue-50">{icon}</div>
         <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
       </div>
 
@@ -149,7 +164,7 @@ function Input({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+        className="w-full px-4 py-3 mt-2 transition border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       />
     </div>
   );
@@ -165,7 +180,7 @@ function ModernToggle({
   onToggle: () => void;
 }) {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex items-center justify-between">
       <span className="text-gray-700">{label}</span>
 
       <motion.button
@@ -178,7 +193,7 @@ function ModernToggle({
         <motion.div
           layout
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className="w-6 h-6 bg-white rounded-full absolute top-0.5"
+          className="absolute w-6 h-6 bg-white rounded-full top-0.5"
           style={{
             left: enabled ? "calc(100% - 26px)" : "2px",
           }}
