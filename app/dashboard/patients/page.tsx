@@ -234,65 +234,95 @@ export default function PatientsPage() {
             <motion.div
               key={p.id}
               whileHover={{ y: -6 }}
-              className="relative p-6 bg-white border shadow cursor-pointer rounded-2xl hover:shadow-lg"
+              transition={{ duration: 0.2 }}
+              className="relative p-6 overflow-hidden transition bg-white border border-gray-200 shadow-sm rounded-2xl hover:shadow-lg"
               onClick={() => router.push(`/dashboard/patients/${p.id}`)}
             >
-              {/* risk bar */}
-
+              {/* Risk indicator */}
               <div
-                className={`absolute left-0 top-0 w-1 h-full rounded-l-2xl ${riskColor}`}
+                className={`absolute left-0 top-0 h-full w-1 ${
+                  p.risk === "Critical"
+                    ? "bg-red-500"
+                    : p.risk === "High"
+                      ? "bg-orange-500"
+                      : p.risk === "Medium"
+                        ? "bg-yellow-500"
+                        : "bg-green-500"
+                }`}
               />
 
-              <div className="flex justify-between">
+              {/* Header */}
+              <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-slate-900">
                     {p.name}
                   </h2>
 
-                  <p className="text-sm text-gray-500">{p.department}</p>
+                  <p className="text-sm text-slate-500">{p.department}</p>
                 </div>
 
-                <StatusBadge status={p.status} />
+                <span className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+                  {p.status}
+                </span>
               </div>
 
-              <p className="mt-3 text-sm text-gray-700">
-                <b>Diagnosis:</b> {p.diagnosis}
+              {/* Diagnosis */}
+              <p className="mt-4 text-sm text-slate-700">
+                <span className="font-medium">Diagnosis:</span> {p.diagnosis}
               </p>
 
-              {/* vitals preview */}
-
-              <div className="grid grid-cols-3 gap-4 mt-4 text-sm text-center">
+              {/* Vitals */}
+              <div className="grid grid-cols-3 gap-4 mt-5 text-center">
                 <div>
-                  <p className="text-xs text-gray-400">HR</p>
-
-                  <p className="font-semibold">{p.vitals?.hr ?? "--"}</p>
+                  <p className="text-xs text-slate-500">HR</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {p.vitals?.hr ?? "--"}
+                  </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-400">O2</p>
-
-                  <p className="font-semibold">{p.vitals?.o2 ?? "--"}%</p>
+                  <p className="text-xs text-slate-500">O2</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {p.vitals?.o2 ?? "--"}%
+                  </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-400">BP</p>
-
-                  <p className="font-semibold">{p.vitals?.bp ?? "--"}</p>
+                  <p className="text-xs text-slate-500">BP</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {p.vitals?.bp ?? "--"}
+                  </p>
                 </div>
               </div>
 
-              <p className="mt-2 text-sm">
-                <b>Risk:</b> <RiskBadge risk={p.risk} />
-              </p>
+              {/* Risk */}
+              <div className="mt-5 text-sm">
+                <span className="text-slate-500">Risk: </span>
 
+                <span
+                  className={`font-semibold ${
+                    p.risk === "Critical"
+                      ? "text-red-600"
+                      : p.risk === "High"
+                        ? "text-orange-600"
+                        : p.risk === "Medium"
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                  }`}
+                >
+                  {p.risk}
+                </span>
+              </div>
+
+              {/* Actions */}
               <div
-                className="flex gap-3 pt-5"
+                className="flex gap-3 pt-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <RoleGuard allow={["ADMIN", "DOCTOR"]}>
                   <button
                     onClick={() => openEditModal(p)}
-                    className="px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+                    className="px-4 py-2 text-sm font-medium text-blue-600 transition border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
                   >
                     Edit
                   </button>
@@ -301,7 +331,7 @@ export default function PatientsPage() {
                 <RoleGuard allow={["ADMIN"]}>
                   <button
                     onClick={() => handleDelete(p.id)}
-                    className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700"
+                    className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
                   >
                     Delete
                   </button>
