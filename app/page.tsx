@@ -8,12 +8,13 @@ import {
   ShieldCheck,
   Bell,
   BarChart3,
+  HeartPulse,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
 
-  /* ================= SMOOTH SCROLL FUNCTION ================= */
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (!element) return;
@@ -21,9 +22,7 @@ export default function HomePage() {
     const navbarOffset = 90;
 
     const y =
-      element.getBoundingClientRect().top +
-      window.scrollY -
-      navbarOffset;
+      element.getBoundingClientRect().top + window.scrollY - navbarOffset;
 
     window.scrollTo({
       top: y,
@@ -32,19 +31,24 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#F8FAFC]">
+      {/* ===== BACKGROUND GRADIENT LIGHTS ===== */}
 
-      {/* ================= NAVBAR ================= */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white/70 backdrop-blur-lg">
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute w-[700px] h-[700px] bg-blue-500/20 blur-[140px] -top-40 -left-40" />
+
+        <div className="absolute w-[700px] h-[700px] bg-indigo-500/20 blur-[140px] bottom-[-200px] right-[-200px]" />
+      </div>
+
+      {/* ===== NAVBAR ===== */}
+
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white/70 backdrop-blur-xl">
         <div className="flex items-center justify-between px-8 py-4 mx-auto max-w-7xl">
-
-          <h1 className="text-xl font-bold text-gray-800">
+          <h1 className="text-xl font-bold tracking-tight text-gray-800">
             MedSafe AI
           </h1>
 
           <nav className="flex items-center gap-6 text-sm font-medium">
-
-            {/* Section Buttons */}
             <button
               onClick={() => scrollToSection("features")}
               className="text-gray-600 transition hover:text-blue-600"
@@ -66,7 +70,6 @@ export default function HomePage() {
               Contact
             </button>
 
-            {/* Auth Aware Buttons */}
             {!user ? (
               <>
                 <Link
@@ -78,7 +81,7 @@ export default function HomePage() {
 
                 <Link
                   href="/signup"
-                  className="px-4 py-2 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 text-white transition bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700"
                 >
                   Sign Up
                 </Link>
@@ -87,7 +90,7 @@ export default function HomePage() {
               <>
                 <Link
                   href="/dashboard"
-                  className="px-4 py-2 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 text-white transition bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700"
                 >
                   Dashboard
                 </Link>
@@ -104,135 +107,178 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ================= HERO ================= */}
-      <section className="px-6 pt-40 text-center pb-28">
+      {/* ===== HERO ===== */}
+
+      <section className="relative px-6 text-center pt-44 pb-36">
+        {/* floating card 1 */}
+
+        <motion.div
+          initial={{ y: -20 }}
+          animate={{ y: 20 }}
+          transition={{ duration: 6, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute hidden p-5 bg-white shadow-xl left-10 top-44 rounded-2xl md:block"
+        >
+          <div className="flex items-center gap-2 text-red-500">
+            <HeartPulse size={20} />
+            <p className="text-sm font-semibold">Heart Rate</p>
+          </div>
+          <p className="mt-1 text-2xl font-bold">104 bpm</p>
+        </motion.div>
+
+        {/* floating card 2 */}
+
+        <motion.div
+          initial={{ y: 20 }}
+          animate={{ y: -20 }}
+          transition={{ duration: 5, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute hidden p-5 bg-white shadow-xl right-10 top-60 rounded-2xl md:block"
+        >
+          <div className="flex items-center gap-2 text-yellow-500">
+            <AlertTriangle size={20} />
+            <p className="text-sm font-semibold">Alert</p>
+          </div>
+
+          <p className="mt-1 font-semibold text-gray-800">
+            Medication Conflict
+          </p>
+        </motion.div>
 
         <motion.h2
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="max-w-4xl mx-auto text-5xl font-bold text-gray-800"
+          transition={{ duration: 0.8 }}
+          className="max-w-5xl mx-auto text-6xl font-bold leading-tight text-gray-900"
         >
-          Intelligent Clinical Monitoring Platform
+          AI Powered
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500">
+            Clinical Monitoring
+          </span>
         </motion.h2>
 
         <motion.p
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9 }}
+          transition={{ delay: 0.2 }}
           className="max-w-2xl mx-auto mt-6 text-lg text-gray-600"
         >
-          Real-time ICU monitoring, medication safety intelligence,
-          automated alerts, and predictive analytics —
-          unified into one powerful medical dashboard.
+          Real-time ICU monitoring, medication safety detection, automated
+          clinical alerts, and hospital analytics — all inside one intelligent
+          platform.
         </motion.p>
 
+        {/* ECG WAVE */}
+
+        <div className="flex justify-center mt-10">
+          <svg width="400" height="80">
+            <motion.path
+              d="M0 40 L40 40 L60 10 L80 70 L100 40 L140 40 L160 20 L180 60 L200 40 L240 40 L260 10 L280 70 L300 40 L340 40 L360 20 L380 60 L400 40"
+              stroke="#2563EB"
+              strokeWidth="3"
+              fill="transparent"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+          </svg>
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.1 }}
+          transition={{ delay: 0.4 }}
           className="flex justify-center gap-6 mt-10"
         >
           {!user ? (
             <>
               <Link
                 href="/login"
-                className="px-8 py-3 text-white transition bg-blue-600 shadow-lg rounded-xl hover:shadow-xl hover:bg-blue-700"
+                className="px-8 py-3 text-white transition bg-blue-600 shadow-xl rounded-xl hover:bg-blue-700 hover:shadow-2xl"
               >
                 Get Started
               </Link>
 
               <button
                 onClick={() => scrollToSection("features")}
-                className="px-8 py-3 text-blue-600 transition border border-blue-600 rounded-xl hover:bg-blue-50"
+                className="px-8 py-3 transition border border-gray-300 rounded-xl hover:bg-gray-100"
               >
-                Explore Features
+                Explore Platform
               </button>
             </>
           ) : (
             <Link
               href="/dashboard"
-              className="px-8 py-3 text-white transition bg-blue-600 shadow-lg rounded-xl hover:shadow-xl hover:bg-blue-700"
+              className="px-8 py-3 text-white transition bg-blue-600 shadow-xl rounded-xl hover:bg-blue-700"
             >
-              Go to Dashboard
+              Open Dashboard
             </Link>
           )}
         </motion.div>
       </section>
 
-      {/* ================= FEATURES ================= */}
-      <section
-        id="features"
-        className="py-24 bg-white"
-      >
-        <div className="max-w-6xl px-6 mx-auto text-center">
+      {/* ===== FEATURES ===== */}
 
-          <h3 className="mb-16 text-3xl font-bold text-gray-800">
-            Core Platform Features
+      <section id="features" className="py-28">
+        <div className="max-w-6xl px-6 mx-auto text-center">
+          <h3 className="mb-16 text-4xl font-bold text-gray-800">
+            Platform Capabilities
           </h3>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-
             <FeatureCard
-              icon={<Activity size={28} />}
+              icon={<Activity size={26} />}
               title="ICU Live Monitoring"
-              desc="Continuous vital simulation with automatic risk scoring."
+              desc="Continuous vital tracking with anomaly detection."
             />
 
             <FeatureCard
-              icon={<ShieldCheck size={28} />}
+              icon={<ShieldCheck size={26} />}
               title="Medication Intelligence"
-              desc="Real-time drug interaction detection engine."
+              desc="Detect dangerous drug interactions instantly."
             />
 
             <FeatureCard
-              icon={<Bell size={28} />}
-              title="Smart Alert Engine"
-              desc="Automated alert generation & resolution system."
+              icon={<Bell size={26} />}
+              title="Alert Automation"
+              desc="Smart clinical alerts with severity classification."
             />
 
             <FeatureCard
-              icon={<BarChart3 size={28} />}
+              icon={<BarChart3 size={26} />}
               title="Clinical Analytics"
-              desc="Department breakdown & risk distribution insights."
+              desc="Patient risk distribution and hospital insights."
             />
           </div>
         </div>
       </section>
 
-      {/* ================= ABOUT ================= */}
+      {/* ===== ABOUT ===== */}
+
       <section
         id="about"
-        className="py-24 bg-gradient-to-r from-blue-50 to-indigo-50"
+        className="py-28 bg-gradient-to-r from-blue-50 to-indigo-50"
       >
         <div className="max-w-4xl px-6 mx-auto text-center">
-
-          <h3 className="mb-6 text-3xl font-bold text-gray-800">
+          <h3 className="mb-6 text-4xl font-bold text-gray-800">
             About MedSafe AI
           </h3>
 
           <p className="leading-relaxed text-gray-600">
-            MedSafe AI is designed as a next-generation clinical
-            intelligence system combining ICU monitoring,
-            medication validation, alert automation,
-            and predictive analytics in a single platform.
+            MedSafe AI is a clinical intelligence platform designed to enhance
+            hospital monitoring through real-time patient tracking, automated
+            alerts, and advanced analytics.
           </p>
         </div>
       </section>
 
-      {/* ================= CONTACT ================= */}
-      <section
-        id="contact"
-        className="py-24 bg-white"
-      >
-        <div className="max-w-3xl px-6 mx-auto text-center">
+      {/* ===== CONTACT ===== */}
 
-          <h3 className="mb-6 text-3xl font-bold text-gray-800">
-            Contact Us
-          </h3>
+      <section id="contact" className="py-28">
+        <div className="max-w-3xl px-6 mx-auto text-center">
+          <h3 className="mb-6 text-4xl font-bold text-gray-800">Contact</h3>
 
           <p className="mb-8 text-gray-600">
-            Questions? Collaboration? Reach our team anytime.
+            For partnerships or collaboration inquiries.
           </p>
 
           <div className="space-y-3 text-gray-700">
@@ -243,15 +289,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= FOOTER ================= */}
-      <footer className="py-6 text-sm text-center text-gray-500 bg-gray-100">
+      <footer className="py-8 text-sm text-center text-gray-500 bg-white border-t">
         © {new Date().getFullYear()} MedSafe AI. All rights reserved.
       </footer>
     </div>
   );
 }
 
-/* ================= FEATURE CARD ================= */
 function FeatureCard({
   icon,
   title,
@@ -263,24 +307,16 @@ function FeatureCard({
 }) {
   return (
     <motion.div
-      whileHover={{ y: -8 }}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      viewport={{ once: true }}
-      className="p-6 transition bg-white border shadow rounded-2xl hover:shadow-xl"
+      whileHover={{ y: -10, scale: 1.03 }}
+      className="p-8 transition bg-white border shadow-sm rounded-2xl hover:shadow-2xl"
     >
-      <div className="flex justify-center mb-4 text-blue-600">
-        {icon}
+      <div className="flex justify-center mb-5 text-blue-600">
+        <div className="p-3 bg-blue-100 rounded-xl">{icon}</div>
       </div>
 
-      <h4 className="mb-2 font-semibold text-gray-800">
-        {title}
-      </h4>
+      <h4 className="mb-2 text-lg font-semibold text-gray-800">{title}</h4>
 
-      <p className="text-sm text-gray-600">
-        {desc}
-      </p>
+      <p className="text-sm text-gray-600">{desc}</p>
     </motion.div>
   );
 }
