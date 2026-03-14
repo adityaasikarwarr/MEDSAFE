@@ -61,13 +61,18 @@ export default function ICUPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* HEADER */}
+
       <div>
-        <h1 className="text-3xl font-semibold text-slate-900">ICU Monitor</h1>
-        <p className="text-slate-500">Real-time patient monitoring dashboard</p>
+        <h1 className="text-3xl font-semibold text-slate-900">
+          ICU Live Monitoring
+        </h1>
+
+        <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
-      {/* Empty State */}
+      {/* EMPTY STATE */}
+
       {patients.length === 0 && (
         <StatusCard
           title="No ICU Patients"
@@ -75,11 +80,21 @@ export default function ICUPage() {
         />
       )}
 
-      {/* ICU Grid */}
+      {/* ICU GRID */}
+
       {patients.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {patients.map((patient) => {
             const data = vitals[patient.id];
+
+            const borderStyle =
+              patient.risk === "Critical"
+                ? "border-red-400 shadow-red-100"
+                : patient.risk === "High"
+                  ? "border-orange-400 shadow-orange-100"
+                  : patient.risk === "Medium"
+                    ? "border-yellow-400 shadow-yellow-100"
+                    : "border-green-400 shadow-green-100";
 
             return (
               <motion.div
@@ -88,17 +103,20 @@ export default function ICUPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
                 whileHover={{ scale: 1.02 }}
-                className={`p-6 space-y-5 bg-white border rounded-2xl shadow-sm transition ${
-                  patient.risk === "Critical"
-                    ? "border-red-400"
-                    : patient.risk === "High"
-                      ? "border-orange-400"
-                      : patient.risk === "Medium"
-                        ? "border-yellow-400"
-                        : "border-green-400"
-                }`}
+                className={`relative p-6 space-y-5 border rounded-2xl bg-white/80 backdrop-blur-md shadow-lg transition ${borderStyle}`}
               >
-                {/* Header */}
+                {/* CRITICAL PULSE EFFECT */}
+
+                {patient.risk === "Critical" && (
+                  <motion.div
+                    className="absolute inset-0 border-2 border-red-400 rounded-2xl"
+                    animate={{ opacity: [0.2, 0.6, 0.2] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                )}
+
+                {/* HEADER */}
+
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
@@ -114,10 +132,13 @@ export default function ICUPage() {
                   <RiskBadge risk={patient.risk} />
                 </div>
 
-                {/* Patient Info */}
+                {/* PATIENT INFO */}
+
                 <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                   <Info label="Age" value={patient.age} />
+
                   <Info label="Status" value={patient.status} />
+
                   <Info
                     label="Medications"
                     value={
@@ -128,7 +149,8 @@ export default function ICUPage() {
                   />
                 </div>
 
-                {/* Vitals */}
+                {/* VITALS */}
+
                 {data && (
                   <div className="space-y-4">
                     <VitalBar
