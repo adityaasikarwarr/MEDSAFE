@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { HeartPulse, Activity, User } from "lucide-react";
 import StatusCard from "@/components/ui/StatusCard";
-
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 type VitalState = {
@@ -76,19 +75,58 @@ export default function ICUPage() {
     return () => clearInterval(interval);
   }, [patients, settings.icuAutoMonitoring]);
 
+  const totalPatients = patients.length;
+
+  const criticalPatients = patients.filter((p) => p.risk === "Critical").length;
+
+  const avgHR =
+    Object.values(vitals).reduce((sum, v) => sum + v.heartRate, 0) /
+    (Object.values(vitals).length || 1);
+
+  const avgOxygen =
+    Object.values(vitals).reduce((sum, v) => sum + v.oxygen, 0) /
+    (Object.values(vitals).length || 1);
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">
           ICU Live Monitoring
         </h1>
-
         <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
-      {/* Empty state */}
+      {/* ICU CONTROL PANEL */}
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid grid-cols-2 gap-6 md:grid-cols-4"
+      >
+        <StatCard
+          title="Patients"
+          value={totalPatients}
+          color="text-blue-400"
+        />
+
+        <StatCard
+          title="Critical"
+          value={criticalPatients}
+          color="text-red-400"
+        />
+
+        <StatCard
+          title="Avg HR"
+          value={`${Math.round(avgHR)} bpm`}
+          color="text-orange-400"
+        />
+
+        <StatCard
+          title="Avg O₂"
+          value={`${Math.round(avgOxygen)} %`}
+          color="text-green-400"
+        />
+      </motion.div>
 
       {patients.length === 0 && (
         <StatusCard
@@ -96,8 +134,6 @@ export default function ICUPage() {
           description="There are currently no patients under intensive monitoring."
         />
       )}
-
-      {/* ICU Grid */}
 
       {patients.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -121,12 +157,8 @@ export default function ICUPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
                 whileHover={{ scale: 1.02 }}
-                className={`relative p-6 space-y-6 rounded-2xl border shadow-xl
-                bg-gradient-to-br from-slate-900 to-slate-800 text-white
-                ${borderStyle}`}
+                className={`relative p-6 space-y-6 rounded-2xl border shadow-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white ${borderStyle}`}
               >
-                {/* Critical pulse */}
-
                 {patient.risk === "Critical" && (
                   <motion.div
                     className="absolute inset-0 border-2 border-red-400 rounded-2xl"
@@ -134,8 +166,6 @@ export default function ICUPage() {
                     transition={{ duration: 1.5, repeat: Infinity }}
                   />
                 )}
-
-                {/* Patient Header */}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -153,8 +183,6 @@ export default function ICUPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {/* Live monitor indicator */}
-
                     <span className="relative flex w-3 h-3">
                       <span className="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
                       <span className="relative inline-flex w-3 h-3 bg-green-500 rounded-full"></span>
@@ -163,8 +191,6 @@ export default function ICUPage() {
                     <RiskBadge risk={patient.risk} />
                   </div>
                 </div>
-
-                {/* Patient Info */}
 
                 <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
                   <Info label="Age" value={patient.age} />
@@ -179,8 +205,6 @@ export default function ICUPage() {
                     }
                   />
                 </div>
-
-                {/* Vitals */}
 
                 {data && (
                   <div className="space-y-4">
@@ -220,7 +244,25 @@ export default function ICUPage() {
   );
 }
 
-/* ============================= */
+/* COMPONENTS */
+
+function StatCard({
+  title,
+  value,
+  color,
+}: {
+  title: string;
+  value: any;
+  color: string;
+}) {
+  return (
+    <div className="p-5 text-white shadow-lg rounded-xl bg-slate-900">
+      <p className="text-xs text-slate-400">{title}</p>
+
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
 
 function MiniChart({
   data,
@@ -241,7 +283,6 @@ function MiniChart({
             stroke={color}
             strokeWidth={2}
             dot={false}
-            isAnimationActive={true}
           />
         </LineChart>
       </ResponsiveContainer>
