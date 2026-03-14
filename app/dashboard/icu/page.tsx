@@ -33,7 +33,6 @@ export default function ICUPage() {
 
     const interval = setInterval(async () => {
       const updated: Record<number, VitalState> = {};
-
       const updatedCharts = { ...charts };
 
       for (const p of patients) {
@@ -79,6 +78,8 @@ export default function ICUPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
+
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">
           ICU Live Monitoring
@@ -87,12 +88,16 @@ export default function ICUPage() {
         <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
+      {/* Empty state */}
+
       {patients.length === 0 && (
         <StatusCard
           title="No ICU Patients"
           description="There are currently no patients under intensive monitoring."
         />
       )}
+
+      {/* ICU Grid */}
 
       {patients.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -102,12 +107,12 @@ export default function ICUPage() {
 
             const borderStyle =
               patient.risk === "Critical"
-                ? "border-red-400 shadow-red-100"
+                ? "border-red-400"
                 : patient.risk === "High"
-                  ? "border-orange-400 shadow-orange-100"
+                  ? "border-orange-400"
                   : patient.risk === "Medium"
-                    ? "border-yellow-400 shadow-yellow-100"
-                    : "border-green-400 shadow-green-100";
+                    ? "border-yellow-400"
+                    : "border-green-400";
 
             return (
               <motion.div
@@ -116,8 +121,12 @@ export default function ICUPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
                 whileHover={{ scale: 1.02 }}
-                className={`relative p-6 space-y-5 border rounded-2xl bg-white/80 backdrop-blur-md shadow-lg transition ${borderStyle}`}
+                className={`relative p-6 space-y-6 rounded-2xl border shadow-xl
+                bg-gradient-to-br from-slate-900 to-slate-800 text-white
+                ${borderStyle}`}
               >
+                {/* Critical pulse */}
+
                 {patient.risk === "Critical" && (
                   <motion.div
                     className="absolute inset-0 border-2 border-red-400 rounded-2xl"
@@ -126,22 +135,38 @@ export default function ICUPage() {
                   />
                 )}
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      <User size={16} />
-                      {patient.name}
-                    </h2>
+                {/* Patient Header */}
 
-                    <p className="text-sm text-slate-500">
-                      {patient.department}
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-slate-700">
+                      <User size={16} />
+                    </div>
+
+                    <div>
+                      <h2 className="text-lg font-semibold">{patient.name}</h2>
+
+                      <p className="text-xs text-slate-400">
+                        {patient.department}
+                      </p>
+                    </div>
                   </div>
 
-                  <RiskBadge risk={patient.risk} />
+                  <div className="flex items-center gap-3">
+                    {/* Live monitor indicator */}
+
+                    <span className="relative flex w-3 h-3">
+                      <span className="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
+                      <span className="relative inline-flex w-3 h-3 bg-green-500 rounded-full"></span>
+                    </span>
+
+                    <RiskBadge risk={patient.risk} />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
+                {/* Patient Info */}
+
+                <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
                   <Info label="Age" value={patient.age} />
                   <Info label="Status" value={patient.status} />
 
@@ -154,6 +179,8 @@ export default function ICUPage() {
                     }
                   />
                 </div>
+
+                {/* Vitals */}
 
                 {data && (
                   <div className="space-y-4">
@@ -205,7 +232,7 @@ function MiniChart({
   color: string;
 }) {
   return (
-    <div className="h-16">
+    <div className="h-16 p-1 rounded-lg bg-slate-800">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <Line
@@ -243,7 +270,7 @@ function Info({ label, value }: { label: string; value: any }) {
   return (
     <div>
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="font-medium text-slate-700">{value}</p>
+      <p className="font-medium text-white">{value}</p>
     </div>
   );
 }
@@ -276,7 +303,7 @@ function VitalBar({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1 text-sm text-slate-600">
+      <div className="flex items-center justify-between mb-1 text-sm text-slate-300">
         <span className="flex items-center gap-2">
           {icon} {label}
         </span>
@@ -286,7 +313,7 @@ function VitalBar({
         </span>
       </div>
 
-      <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
+      <div className="w-full h-2 overflow-hidden rounded-full bg-slate-700">
         <motion.div
           className={`h-full ${barColor}`}
           initial={{ width: 0 }}
