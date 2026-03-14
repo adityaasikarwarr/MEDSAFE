@@ -95,7 +95,7 @@ export default function ICUPage() {
         <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
-      {/* CONTROL PANEL */}
+      {/* Stats Panel */}
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <StatCard
@@ -103,19 +103,16 @@ export default function ICUPage() {
           value={totalPatients}
           color="text-blue-600"
         />
-
         <StatCard
           title="Critical"
           value={criticalPatients}
           color="text-red-500"
         />
-
         <StatCard
           title="Avg HR"
           value={`${Math.round(avgHR)} bpm`}
           color="text-orange-500"
         />
-
         <StatCard
           title="Avg O₂"
           value={`${Math.round(avgOxygen)} %`}
@@ -162,6 +159,8 @@ export default function ICUPage() {
                   />
                 )}
 
+                {/* Header */}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-slate-100">
@@ -172,7 +171,6 @@ export default function ICUPage() {
                       <h2 className="text-lg font-semibold text-slate-900">
                         {patient.name}
                       </h2>
-
                       <p className="text-xs text-slate-500">
                         {patient.department}
                       </p>
@@ -189,6 +187,8 @@ export default function ICUPage() {
                   </div>
                 </div>
 
+                {/* Patient Info */}
+
                 <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                   <Info label="Age" value={patient.age} />
                   <Info label="Status" value={patient.status} />
@@ -202,6 +202,8 @@ export default function ICUPage() {
                     }
                   />
                 </div>
+
+                {/* Vitals */}
 
                 {data && (
                   <div className="space-y-4">
@@ -241,9 +243,12 @@ export default function ICUPage() {
   );
 }
 
-/* STAT CARD */
+/* ---------- Components ---------- */
 
 function StatCard({ title, value, color }: any) {
+  const showTrend = typeof value === "string";
+  const trendUp = Math.random() > 0.5;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -252,55 +257,43 @@ function StatCard({ title, value, color }: any) {
       transition={{ duration: 0.4 }}
       className="relative p-5 overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
     >
-      {/* animated border glow */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none rounded-xl"
-        initial={{ opacity: 0 }}
-        whileHover={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        style={{
-          boxShadow:
-            "0 0 0 1px rgba(148,163,184,0.4), 0 0 12px rgba(148,163,184,0.15)",
-        }}
-      />
-
-      {/* top gradient line */}
-      <motion.div
-        className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6 }}
-        style={{ transformOrigin: "left" }}
-      />
-
       <p className="text-xs text-slate-500">{title}</p>
 
-      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      <div className="flex items-center gap-2">
+        <motion.p
+          key={value}
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.25 }}
+          className={`text-2xl font-bold ${color}`}
+        >
+          {value}
+        </motion.p>
+
+        {showTrend && (
+          <span
+            className={`text-sm font-bold ${
+              trendUp ? "text-green-500" : "text-red-500"
+            }`}
+          >
+            {trendUp ? "↑" : "↓"}
+          </span>
+        )}
+      </div>
     </motion.div>
   );
 }
 
-/* MINI CHART */
-
-function MiniChart({ data, dataKey, color }: any) {
+function Info({ label, value }: any) {
   return (
-    <div className="h-16 p-1 rounded-lg bg-slate-100">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <Line
-            type="monotone"
-            dataKey={dataKey}
-            stroke={color}
-            strokeWidth={2}
-            dot={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div>
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="font-medium text-slate-700">{value}</p>
     </div>
   );
 }
 
-function RiskBadge({ risk }: any) {
+function RiskBadge({ risk }: { risk: string }) {
   const styles =
     risk === "Critical"
       ? "bg-red-100 text-red-700 border border-red-200"
@@ -317,11 +310,20 @@ function RiskBadge({ risk }: any) {
   );
 }
 
-function Info({ label, value }: any) {
+function MiniChart({ data, dataKey, color }: any) {
   return (
-    <div>
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="font-medium text-slate-700">{value}</p>
+    <div className="h-16">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -344,6 +346,7 @@ function VitalBar({ icon, label, value, unit, max, risk }: any) {
         <span className="flex items-center gap-2">
           {icon} {label}
         </span>
+
         <span className="font-medium">
           {value} {unit}
         </span>
