@@ -76,7 +76,6 @@ export default function ICUPage() {
   }, [patients, settings.icuAutoMonitoring]);
 
   const totalPatients = patients.length;
-
   const criticalPatients = patients.filter((p) => p.risk === "Critical").length;
 
   const avgHR =
@@ -96,13 +95,9 @@ export default function ICUPage() {
         <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
-      {/* ICU CONTROL PANEL */}
+      {/* CONTROL PANEL */}
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-2 gap-6 md:grid-cols-4"
-      >
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <StatCard
           title="Patients"
           value={totalPatients}
@@ -126,7 +121,7 @@ export default function ICUPage() {
           value={`${Math.round(avgOxygen)} %`}
           color="text-green-500"
         />
-      </motion.div>
+      </div>
 
       {patients.length === 0 && (
         <StatusCard
@@ -246,16 +241,46 @@ export default function ICUPage() {
   );
 }
 
-/* COMPONENTS */
+/* STAT CARD */
 
 function StatCard({ title, value, color }: any) {
   return (
-    <div className="p-5 bg-white shadow rounded-xl">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.03, y: -2 }}
+      transition={{ duration: 0.4 }}
+      className="relative p-5 overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
+    >
+      {/* animated border glow */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none rounded-xl"
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          boxShadow:
+            "0 0 0 1px rgba(148,163,184,0.4), 0 0 12px rgba(148,163,184,0.15)",
+        }}
+      />
+
+      {/* top gradient line */}
+      <motion.div
+        className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.6 }}
+        style={{ transformOrigin: "left" }}
+      />
+
       <p className="text-xs text-slate-500">{title}</p>
+
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
-    </div>
+    </motion.div>
   );
 }
+
+/* MINI CHART */
 
 function MiniChart({ data, dataKey, color }: any) {
   return (
@@ -275,7 +300,7 @@ function MiniChart({ data, dataKey, color }: any) {
   );
 }
 
-function RiskBadge({ risk }: { risk: string }) {
+function RiskBadge({ risk }: any) {
   const styles =
     risk === "Critical"
       ? "bg-red-100 text-red-700 border border-red-200"
