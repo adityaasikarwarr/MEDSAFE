@@ -8,10 +8,17 @@ import { motion } from "framer-motion";
 import { HeartPulse, Activity, User } from "lucide-react";
 import StatusCard from "@/components/ui/StatusCard";
 
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+
 type VitalState = {
   heartRate: number;
   oxygen: number;
   updatedAt: string;
+};
+
+type ChartState = {
+  hr: number;
+  oxygen: number;
 };
 
 export default function ICUPage() {
@@ -19,12 +26,15 @@ export default function ICUPage() {
   const { settings } = useSettings();
 
   const [vitals, setVitals] = useState<Record<number, VitalState>>({});
+  const [charts, setCharts] = useState<Record<number, ChartState[]>>({});
 
   useEffect(() => {
     if (!settings.icuAutoMonitoring) return;
 
     const interval = setInterval(async () => {
       const updated: Record<number, VitalState> = {};
+
+      const updatedCharts = { ...charts };
 
       for (const p of patients) {
         const heartRate = Math.floor(Math.random() * 40) + 70;
@@ -51,8 +61,16 @@ export default function ICUPage() {
           oxygen,
           updatedAt: new Date().toLocaleTimeString(),
         };
+
+        if (!updatedCharts[p.id]) updatedCharts[p.id] = [];
+
+        updatedCharts[p.id] = [
+          ...updatedCharts[p.id].slice(-15),
+          { hr: heartRate, oxygen },
+        ];
       }
 
+      setCharts(updatedCharts);
       setVitals(updated);
     }, 3000);
 
@@ -61,8 +79,6 @@ export default function ICUPage() {
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
-
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">
           ICU Live Monitoring
@@ -71,8 +87,6 @@ export default function ICUPage() {
         <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
-      {/* EMPTY STATE */}
-
       {patients.length === 0 && (
         <StatusCard
           title="No ICU Patients"
@@ -80,12 +94,11 @@ export default function ICUPage() {
         />
       )}
 
-      {/* ICU GRID */}
-
       {patients.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {patients.map((patient) => {
             const data = vitals[patient.id];
+            const chart = charts[patient.id] || [];
 
             const borderStyle =
               patient.risk === "Critical"
@@ -105,8 +118,6 @@ export default function ICUPage() {
                 whileHover={{ scale: 1.02 }}
                 className={`relative p-6 space-y-5 border rounded-2xl bg-white/80 backdrop-blur-md shadow-lg transition ${borderStyle}`}
               >
-                {/* CRITICAL PULSE EFFECT */}
-
                 {patient.risk === "Critical" && (
                   <motion.div
                     className="absolute inset-0 border-2 border-red-400 rounded-2xl"
@@ -114,8 +125,6 @@ export default function ICUPage() {
                     transition={{ duration: 1.5, repeat: Infinity }}
                   />
                 )}
-
-                {/* HEADER */}
 
                 <div className="flex items-center justify-between">
                   <div>
@@ -132,11 +141,8 @@ export default function ICUPage() {
                   <RiskBadge risk={patient.risk} />
                 </div>
 
-                {/* PATIENT INFO */}
-
                 <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                   <Info label="Age" value={patient.age} />
-
                   <Info label="Status" value={patient.status} />
 
                   <Info
@@ -149,8 +155,6 @@ export default function ICUPage() {
                   />
                 </div>
 
-                {/* VITALS */}
-
                 {data && (
                   <div className="space-y-4">
                     <VitalBar
@@ -162,6 +166,8 @@ export default function ICUPage() {
                       risk={patient.risk}
                     />
 
+                    <MiniChart data={chart} dataKey="hr" color="#ef4444" />
+
                     <VitalBar
                       icon={<Activity size={16} />}
                       label="Oxygen"
@@ -170,6 +176,8 @@ export default function ICUPage() {
                       max={100}
                       risk={patient.risk}
                     />
+
+                    <MiniChart data={chart} dataKey="oxygen" color="#3b82f6" />
 
                     <p className="text-xs text-slate-400">
                       Updated at {data.updatedAt}
@@ -186,6 +194,33 @@ export default function ICUPage() {
 }
 
 /* ============================= */
+
+function MiniChart({
+  data,
+  dataKey,
+  color,
+}: {
+  data: any[];
+  dataKey: string;
+  color: string;
+}) {
+  return (
+    <div className="h-16">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={true}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 function RiskBadge({ risk }: { risk: string }) {
   const styles =
@@ -248,9 +283,6 @@ function VitalBar({
 
         <span className="flex items-center gap-1 font-medium">
           {value} {unit}
-          {value > max * 0.8 && (
-            <span className="text-xs font-bold text-red-500">↑</span>
-          )}
         </span>
       </div>
 
