@@ -20,12 +20,19 @@ type ChartState = {
   oxygen: number;
 };
 
+type EventItem = {
+  message: string;
+  type: "alert" | "info";
+  time: string;
+};
+
 export default function ICUPage() {
   const { patients, updatePatient } = usePatients();
   const { settings } = useSettings();
 
   const [vitals, setVitals] = useState<Record<number, VitalState>>({});
   const [charts, setCharts] = useState<Record<number, ChartState[]>>({});
+  const [events, setEvents] = useState<EventItem[]>([]);
 
   useEffect(() => {
     if (!settings.icuAutoMonitoring) return;
@@ -66,6 +73,30 @@ export default function ICUPage() {
           ...updatedCharts[p.id].slice(-15),
           { hr: heartRate, oxygen },
         ];
+
+        /* -------- ICU EVENT GENERATION -------- */
+
+        if (heartRate > 110) {
+          setEvents((prev) => [
+            {
+              message: `Heart Rate Spike — ${p.name}`,
+              type: "alert",
+              time: new Date().toLocaleTimeString(),
+            },
+            ...prev.slice(0, 8),
+          ]);
+        }
+
+        if (oxygen < 92) {
+          setEvents((prev) => [
+            {
+              message: `Low Oxygen Level — ${p.name}`,
+              type: "alert",
+              time: new Date().toLocaleTimeString(),
+            },
+            ...prev.slice(0, 8),
+          ]);
+        }
       }
 
       setCharts(updatedCharts);
@@ -88,6 +119,7 @@ export default function ICUPage() {
 
   return (
     <div className="space-y-8">
+      {/* HEADER */}
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">
           ICU Live Monitoring
@@ -95,8 +127,7 @@ export default function ICUPage() {
         <p className="text-slate-500">Real-time patient vitals tracking</p>
       </div>
 
-      {/* Stats Panel */}
-
+      {/* STATS PANEL */}
       <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <StatCard
           title="Patients"
@@ -120,12 +151,55 @@ export default function ICUPage() {
         />
       </div>
 
+      {/* ICU EVENT FEED */}
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="p-6 bg-white border shadow-sm rounded-2xl border-slate-200"
+      >
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">
+          ICU Event Feed
+        </h3>
+
+        <div className="space-y-3">
+          {events.length === 0 && (
+            <p className="text-sm text-slate-400">
+              Monitoring system events will appear here
+            </p>
+          )}
+
+          {events.map((event, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center justify-between p-3 border rounded-lg border-slate-200 bg-slate-50"
+            >
+              <span
+                className={`text-sm font-medium ${
+                  event.type === "alert" ? "text-red-600" : "text-slate-700"
+                }`}
+              >
+                {event.type === "alert" ? "⚠" : "✔"} {event.message}
+              </span>
+
+              <span className="text-xs text-slate-400">{event.time}</span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* EMPTY STATE */}
+
       {patients.length === 0 && (
         <StatusCard
           title="No ICU Patients"
           description="There are currently no patients under intensive monitoring."
         />
       )}
+
+      {/* PATIENT GRID */}
 
       {patients.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -147,7 +221,6 @@ export default function ICUPage() {
                 key={patient.id}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
                 whileHover={{ scale: 1.02 }}
                 className={`relative p-6 space-y-6 rounded-2xl border bg-white shadow-lg ${borderStyle}`}
               >
@@ -159,7 +232,7 @@ export default function ICUPage() {
                   />
                 )}
 
-                {/* Header */}
+                {/* HEADER */}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -171,6 +244,7 @@ export default function ICUPage() {
                       <h2 className="text-lg font-semibold text-slate-900">
                         {patient.name}
                       </h2>
+
                       <p className="text-xs text-slate-500">
                         {patient.department}
                       </p>
@@ -187,7 +261,7 @@ export default function ICUPage() {
                   </div>
                 </div>
 
-                {/* Patient Info */}
+                {/* PATIENT INFO */}
 
                 <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                   <Info label="Age" value={patient.age} />
@@ -203,7 +277,7 @@ export default function ICUPage() {
                   />
                 </div>
 
-                {/* Vitals */}
+                {/* VITALS */}
 
                 {data && (
                   <div className="space-y-4">
@@ -243,7 +317,7 @@ export default function ICUPage() {
   );
 }
 
-/* ---------- Components ---------- */
+/* ---------- COMPONENTS ---------- */
 
 function StatCard({ title, value, color }: any) {
   const showTrend = typeof value === "string";
@@ -254,8 +328,7 @@ function StatCard({ title, value, color }: any) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.03, y: -2 }}
-      transition={{ duration: 0.4 }}
-      className="relative p-5 overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
+      className="relative p-5 bg-white border shadow-sm rounded-xl border-slate-200"
     >
       <p className="text-xs text-slate-500">{title}</p>
 
@@ -264,7 +337,6 @@ function StatCard({ title, value, color }: any) {
           key={value}
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
-          transition={{ duration: 0.25 }}
           className={`text-2xl font-bold ${color}`}
         >
           {value}
