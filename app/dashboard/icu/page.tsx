@@ -106,25 +106,25 @@ export default function ICUPage() {
         <StatCard
           title="Patients"
           value={totalPatients}
-          color="text-blue-400"
+          color="text-blue-600"
         />
 
         <StatCard
           title="Critical"
           value={criticalPatients}
-          color="text-red-400"
+          color="text-red-500"
         />
 
         <StatCard
           title="Avg HR"
           value={`${Math.round(avgHR)} bpm`}
-          color="text-orange-400"
+          color="text-orange-500"
         />
 
         <StatCard
           title="Avg O₂"
           value={`${Math.round(avgOxygen)} %`}
-          color="text-green-400"
+          color="text-green-500"
         />
       </motion.div>
 
@@ -157,7 +157,7 @@ export default function ICUPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
                 whileHover={{ scale: 1.02 }}
-                className={`relative p-6 space-y-6 rounded-2xl border shadow-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white ${borderStyle}`}
+                className={`relative p-6 space-y-6 rounded-2xl border bg-white shadow-lg ${borderStyle}`}
               >
                 {patient.risk === "Critical" && (
                   <motion.div
@@ -169,14 +169,16 @@ export default function ICUPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-slate-700">
+                    <div className="p-2 rounded-lg bg-slate-100">
                       <User size={16} />
                     </div>
 
                     <div>
-                      <h2 className="text-lg font-semibold">{patient.name}</h2>
+                      <h2 className="text-lg font-semibold text-slate-900">
+                        {patient.name}
+                      </h2>
 
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-500">
                         {patient.department}
                       </p>
                     </div>
@@ -192,7 +194,7 @@ export default function ICUPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
+                <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                   <Info label="Age" value={patient.age} />
                   <Info label="Status" value={patient.status} />
 
@@ -246,35 +248,18 @@ export default function ICUPage() {
 
 /* COMPONENTS */
 
-function StatCard({
-  title,
-  value,
-  color,
-}: {
-  title: string;
-  value: any;
-  color: string;
-}) {
+function StatCard({ title, value, color }: any) {
   return (
-    <div className="p-5 text-white shadow-lg rounded-xl bg-slate-900">
-      <p className="text-xs text-slate-400">{title}</p>
-
+    <div className="p-5 bg-white shadow rounded-xl">
+      <p className="text-xs text-slate-500">{title}</p>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
     </div>
   );
 }
 
-function MiniChart({
-  data,
-  dataKey,
-  color,
-}: {
-  data: any[];
-  dataKey: string;
-  color: string;
-}) {
+function MiniChart({ data, dataKey, color }: any) {
   return (
-    <div className="h-16 p-1 rounded-lg bg-slate-800">
+    <div className="h-16 p-1 rounded-lg bg-slate-100">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <Line
@@ -307,30 +292,16 @@ function RiskBadge({ risk }: { risk: string }) {
   );
 }
 
-function Info({ label, value }: { label: string; value: any }) {
+function Info({ label, value }: any) {
   return (
     <div>
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="font-medium text-white">{value}</p>
+      <p className="font-medium text-slate-700">{value}</p>
     </div>
   );
 }
 
-function VitalBar({
-  icon,
-  label,
-  value,
-  unit,
-  max,
-  risk,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  unit: string;
-  max: number;
-  risk: string;
-}) {
+function VitalBar({ icon, label, value, unit, max, risk }: any) {
   const percentage = Math.min((value / max) * 100, 100);
 
   const barColor =
@@ -344,17 +315,16 @@ function VitalBar({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1 text-sm text-slate-300">
+      <div className="flex items-center justify-between mb-1 text-sm text-slate-600">
         <span className="flex items-center gap-2">
           {icon} {label}
         </span>
-
-        <span className="flex items-center gap-1 font-medium">
+        <span className="font-medium">
           {value} {unit}
         </span>
       </div>
 
-      <div className="w-full h-2 overflow-hidden rounded-full bg-slate-700">
+      <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
         <motion.div
           className={`h-full ${barColor}`}
           initial={{ width: 0 }}
