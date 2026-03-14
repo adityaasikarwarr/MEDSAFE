@@ -3,7 +3,7 @@
 import { vitalsHistoryService } from "@/services/vitalsHistoryService";
 import { usePatients } from "@/context/PatientContext";
 import { useSettings } from "@/context/SettingsContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { HeartPulse, Activity, User } from "lucide-react";
 import StatusCard from "@/components/ui/StatusCard";
@@ -20,9 +20,8 @@ type ChartState = {
   oxygen: number;
 };
 
-type EventItem = {
+type AlertItem = {
   message: string;
-  type: "alert" | "info";
   time: string;
 };
 
@@ -32,7 +31,11 @@ export default function ICUPage() {
 
   const [vitals, setVitals] = useState<Record<number, VitalState>>({});
   const [charts, setCharts] = useState<Record<number, ChartState[]>>({});
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+
+  /* Prevent alert spam */
+  const alertCooldown = useRef<Record<number, number>>({});
+  const lastAlert = useRef<string>("");
 
   useEffect(() => {
     if (!settings.icuAutoMonitoring) return;
@@ -74,28 +77,26 @@ export default function ICUPage() {
           { hr: heartRate, oxygen },
         ];
 
-        /* -------- ICU EVENT GENERATION -------- */
+        /* ALERT SYSTEM (Spam Protected) */
 
-        if (heartRate > 110) {
-          setEvents((prev) => [
-            {
-              message: `Heart Rate Spike — ${p.name}`,
-              type: "alert",
-              time: new Date().toLocaleTimeString(),
-            },
-            ...prev.slice(0, 8),
-          ]);
+        const now = Date.now();
+        const hrAlert = `Heart Rate Spike — ${p.name}`;
+        const o2Alert = `Low Oxygen Level — ${p.name}`;
+
+        if (!alertCooldown.current[p.id]) {
+          alertCooldown.current[p.id] = 0;
         }
 
-        if (oxygen < 92) {
-          setEvents((prev) => [
-            {
-              message: `Low Oxygen Level — ${p.name}`,
-              type: "alert",
-              time: new Date().toLocaleTimeString(),
-            },
-            ...prev.slice(0, 8),
-          ]);
+        if (now - alertCooldown.current[p.id] > 20000) {
+          if (heartRate > 110 && lastAlert.current !== hrAlert) {
+            pushAlert(hrAlert);
+            alertCooldown.current[p.id] = now;
+          }
+
+          if (oxygen < 92 && lastAlert.current !== o2Alert) {
+            pushAlert(o2Alert);
+            alertCooldown.current[p.id] = now;
+          }
         }
       }
 
@@ -105,6 +106,14 @@ export default function ICUPage() {
 
     return () => clearInterval(interval);
   }, [patients, settings.icuAutoMonitoring]);
+
+  function pushAlert(message: string) {
+    const time = new Date().toLocaleTimeString();
+
+    setAlerts((prev) => [{ message, time }, ...prev.slice(0, 9)]);
+
+    lastAlert.current = message;
+  }
 
   const totalPatients = patients.length;
   const criticalPatients = patients.filter((p) => p.risk === "Critical").length;
@@ -151,7 +160,7 @@ export default function ICUPage() {
         />
       </div>
 
-      {/* ICU EVENT FEED */}
+      {/* ALERT SECTION */}
 
       <motion.div
         initial={{ opacity: 0 }}
@@ -159,32 +168,26 @@ export default function ICUPage() {
         className="p-6 bg-white border shadow-sm rounded-2xl border-slate-200"
       >
         <h3 className="mb-4 text-lg font-semibold text-slate-900">
-          ICU Event Feed
+          ICU Alerts
         </h3>
 
         <div className="space-y-3">
-          {events.length === 0 && (
-            <p className="text-sm text-slate-400">
-              Monitoring system events will appear here
-            </p>
+          {alerts.length === 0 && (
+            <p className="text-sm text-slate-400">No active alerts</p>
           )}
 
-          {events.map((event, i) => (
+          {alerts.map((alert, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center justify-between p-3 border rounded-lg border-slate-200 bg-slate-50"
+              className="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50"
             >
-              <span
-                className={`text-sm font-medium ${
-                  event.type === "alert" ? "text-red-600" : "text-slate-700"
-                }`}
-              >
-                {event.type === "alert" ? "⚠" : "✔"} {event.message}
+              <span className="text-sm font-medium text-red-600">
+                ⚠ {alert.message}
               </span>
 
-              <span className="text-xs text-slate-400">{event.time}</span>
+              <span className="text-xs text-slate-500">{alert.time}</span>
             </motion.div>
           ))}
         </div>
@@ -251,14 +254,7 @@ export default function ICUPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="relative flex w-3 h-3">
-                      <span className="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
-                      <span className="relative inline-flex w-3 h-3 bg-green-500 rounded-full"></span>
-                    </span>
-
-                    <RiskBadge risk={patient.risk} />
-                  </div>
+                  <RiskBadge risk={patient.risk} />
                 </div>
 
                 {/* PATIENT INFO */}
@@ -320,9 +316,6 @@ export default function ICUPage() {
 /* ---------- COMPONENTS ---------- */
 
 function StatCard({ title, value, color }: any) {
-  const showTrend = typeof value === "string";
-  const trendUp = Math.random() > 0.5;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -331,27 +324,7 @@ function StatCard({ title, value, color }: any) {
       className="relative p-5 bg-white border shadow-sm rounded-xl border-slate-200"
     >
       <p className="text-xs text-slate-500">{title}</p>
-
-      <div className="flex items-center gap-2">
-        <motion.p
-          key={value}
-          initial={{ scale: 0.95 }}
-          animate={{ scale: 1 }}
-          className={`text-2xl font-bold ${color}`}
-        >
-          {value}
-        </motion.p>
-
-        {showTrend && (
-          <span
-            className={`text-sm font-bold ${
-              trendUp ? "text-green-500" : "text-red-500"
-            }`}
-          >
-            {trendUp ? "↑" : "↓"}
-          </span>
-        )}
-      </div>
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
     </motion.div>
   );
 }
