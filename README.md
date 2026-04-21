@@ -31,14 +31,6 @@ The system provides a clean interface for hospitals to track patient health cond
 
 ---
 
-# Live Demo
-
-Deployed on Vercel
-
-https://medsafe.vercel.app
-
----
-
 # Why MEDSAFE?
 
 Hospitals require fast and reliable systems to monitor patient conditions.
@@ -186,14 +178,6 @@ Steps:
 
 ---
 
-# Screenshots
-
-Add screenshots like:
-
-![Dashboard](./public/dashboard.png)
-
----
-
 # Future Improvements
 
 • Backend API integration  
@@ -205,13 +189,6 @@ Add screenshots like:
 
 ---
 
-# License
-
-MIT License
-
----
-
-# Author
 
 Aditya Sikarwar
 
